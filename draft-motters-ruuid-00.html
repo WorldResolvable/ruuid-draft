@@ -1,0 +1,2700 @@
+<!DOCTYPE html>
+<html lang="en" class="Internet-Draft">
+<head>
+<meta charset="utf-8">
+<meta content="Common,Latin" name="scripts">
+<meta content="initial-scale=1.0" name="viewport">
+<title>Resolvable Universally Unique Identifiers (RUUID)</title>
+<meta content="Brian Mottershead" name="author">
+<meta content="
+       This document defines Resolvable Universally Unique Identifiers
+(RUUIDs): a UUID format encoding a 64-bit IPv6 network prefix, a
+48-bit identifier, and a 10-bit type. A resolver uses reverse DNS
+on the network prefix to discover the associated domain and, via
+that domain's &quot;UUID document&quot;, constructs a URI of the referent.
+Defaults for both the document location and the referent URI
+template mean that when URLs follow the canonical convention,
+nothing beyond a reverse-DNS PTR record needs to be published;
+resolution degrades gracefully when configuration is missing. 
+       The 64-bit network field carries an IPv6 /64 prefix directly. An IPv4
+/32 is encoded as the corresponding 6to4 prefix ( ).  RUUIDs
+are 128 bits in the standard UUID textual form. Pending a dedicated
+UUID version, they use the RFC 9562 experimental version 8 with
+variant 10, so existing UUID parsers recognise them as well-formed
+UUIDs. 
+    " name="description">
+<meta content="xml2rfc 3.33.0" name="generator">
+<meta content="UUID" name="keyword">
+<meta content="DNS" name="keyword">
+<meta content="identifier" name="keyword">
+<meta content="resolution" name="keyword">
+<meta content="draft-motters-ruuid-00" name="ietf.draft">
+<!-- Generator version information:
+  xml2rfc 3.33.0
+    Python 3.14.2
+    ConfigArgParse 1.7.5
+    google-i18n-address 3.1.1
+    intervaltree 3.2.1
+    Jinja2 3.1.6
+    lxml 6.0.1
+    platformdirs 4.2.2
+    pycountry 26.2.16
+    PyYAML 6.0.2
+    requests 2.32.5
+    wcwidth 0.2.13
+-->
+<link href="draft-motters-ruuid-00.xml" rel="alternate" type="application/rfc+xml">
+<link href="#copyright" rel="license">
+<style type="text/css">/*
+
+  NOTE: Changes at the bottom of this file overrides some earlier settings.
+
+  Once the style has stabilized and has been adopted as an official RFC style,
+  this can be consolidated so that style settings occur only in one place, but
+  for now the contents of this file consists first of the initial CSS work as
+  provided to the RFC Formatter (xml2rfc) work, followed by itemized and
+  commented changes found necessary during the development of the v3
+  formatters.
+
+*/
+
+/* fonts */
+@import url('https://static.ietf.org/fonts/noto-sans/import.css'); /* Sans-serif */
+@import url('https://static.ietf.org/fonts/noto-serif/import.css'); /* Serif (print) */
+@import url('https://static.ietf.org/fonts/roboto-mono/import.css'); /* Monospace */
+
+:root {
+  --font-sans: 'Noto Sans', Arial, Helvetica, sans-serif;
+  --font-serif: 'Noto Serif', 'Times', 'Times New Roman', serif;
+  --font-mono: 'Roboto Mono', Courier, 'Courier New', monospace;
+}
+
+@viewport {
+  zoom: 1.0;
+}
+@-ms-viewport {
+  width: extend-to-zoom;
+  zoom: 1.0;
+}
+/* general and mobile first */
+html {
+}
+body {
+  max-width: 90%;
+  margin: 1.5em auto;
+  color: #222;
+  background-color: #fff;
+  font-size: 14px;
+  font-family: var(--font-sans);
+  line-height: 1.6;
+  scroll-behavior: smooth;
+  overflow-wrap: break-word;
+}
+.ears {
+  display: none;
+}
+
+/* headings */
+#title, h1, h2, h3, h4, h5, h6 {
+  margin: 1em 0 0.5em;
+  font-weight: bold;
+  line-height: 1.3;
+}
+#title {
+  clear: both;
+  border-bottom: 1px solid #ddd;
+  margin: 0 0 0.5em 0;
+  padding: 1em 0 0.5em;
+}
+.author {
+  padding-bottom: 4px;
+}
+h1 {
+  font-size: 26px;
+  margin: 1em 0;
+}
+h2 {
+  font-size: 22px;
+  margin-top: -20px;  /* provide offset for in-page anchors */
+  padding-top: 33px;
+}
+h3 {
+  font-size: 18px;
+  margin-top: -36px;  /* provide offset for in-page anchors */
+  padding-top: 42px;
+}
+h4 {
+  font-size: 16px;
+  margin-top: -36px;  /* provide offset for in-page anchors */
+  padding-top: 42px;
+}
+h5, h6 {
+  font-size: 14px;
+}
+#n-copyright-notice {
+  border-bottom: 1px solid #ddd;
+  padding-bottom: 1em;
+  margin-bottom: 1em;
+}
+/* general structure */
+p {
+  padding: 0;
+  margin: 0 0 1em 0;
+  text-align: left;
+}
+div, span {
+  position: relative;
+}
+div {
+  margin: 0;
+}
+.alignRight.art-text {
+  background-color: #f9f9f9;
+  border: 1px solid #eee;
+  border-radius: 3px;
+  padding: 1em 1em 0;
+  margin-bottom: 1.5em;
+}
+.alignRight.art-text pre {
+  padding: 0;
+}
+.alignRight {
+  margin: 1em 0;
+}
+.alignRight > *:first-child {
+  border: none;
+  margin: 0;
+  float: right;
+  clear: both;
+}
+.alignRight > *:nth-child(2) {
+  clear: both;
+  display: block;
+  border: none;
+}
+svg {
+  display: block;
+}
+@media print {
+  svg {
+    max-height: 850px;
+    max-width: 660px;
+  }
+}
+svg[font-family~="serif" i], svg [font-family~="serif" i] {
+  font-family: var(--font-serif);
+}
+svg[font-family~="sans-serif" i], svg [font-family~="sans-serif" i] {
+  font-family: var(--font-sans);
+}
+svg[font-family~="monospace" i], svg [font-family~="monospace" i] {
+  font-family: var(--font-mono);
+}
+.alignCenter.art-text {
+  background-color: #f9f9f9;
+  border: 1px solid #eee;
+  border-radius: 3px;
+  padding: 1em 1em 0;
+  margin-bottom: 1.5em;
+}
+.alignCenter.art-text pre {
+  padding: 0;
+}
+.alignCenter {
+  margin: 1em 0;
+}
+.alignCenter > *:first-child {
+  display: table;
+  border: none;
+  margin: 0 auto;
+}
+
+/* lists */
+ol, ul {
+  padding: 0;
+  margin: 0 0 1em 2em;
+}
+ol ol, ul ul, ol ul, ul ol {
+  margin-left: 1em;
+}
+li {
+  margin: 0 0 0.25em 0;
+}
+.ulCompact li {
+  margin: 0;
+}
+ul.empty, .ulEmpty {
+  list-style-type: none;
+}
+ul.empty li, .ulEmpty li {
+  margin-top: 0.5em;
+}
+ul.ulBare, li.ulBare {
+  margin-left: 0em !important;
+}
+ul.compact, .ulCompact,
+ol.compact, .olCompact {
+  line-height: 100%;
+  margin: 0 0 0 2em;
+}
+
+/* definition lists */
+dl {
+}
+dl > dt {
+  float: left;
+  margin-right: 1em;
+}
+/* 
+dl.nohang > dt {
+  float: none;
+}
+*/
+dl > dd {
+  margin-bottom: .8em;
+  min-height: 1.3em;
+}
+dl.compact > dd, .dlCompact > dd {
+  margin-bottom: 0em;
+}
+dl > dd > dl {
+  margin-top: 0.5em;
+  margin-bottom: 0em;
+}
+
+/* links */
+a {
+  text-decoration: none;
+}
+a[href] {
+  color: #22e; /* Arlen: WCAG 2019 */
+}
+a[href]:hover {
+  background-color: #f2f2f2;
+}
+figcaption a[href],
+a[href].selfRef {
+  color: #222;
+}
+/* XXX probably not this:
+a.selfRef:hover {
+  background-color: transparent;
+  cursor: default;
+} */
+
+/* Figures */
+tt, code, pre {
+  background-color: #f9f9f9;
+  font-family: var(--font-mono);
+}
+pre {
+  border: 1px solid #eee;
+  margin: 0;
+  padding: 1em;
+}
+img {
+  max-width: 100%;
+}
+figure {
+  margin: 0;
+}
+figure blockquote {
+  margin: 0.8em 0.4em 0.4em;
+}
+figcaption {
+  font-style: italic;
+  margin: 0 0 1em 0;
+}
+@media screen {
+  pre {
+    overflow-x: auto;
+    max-width: 100%;
+    max-width: calc(100% - 22px);
+  }
+}
+
+/* aside, blockquote */
+aside, blockquote {
+  margin-left: 0;
+  padding: 1.2em 2em;
+}
+blockquote {
+  background-color: #f9f9f9;
+  color: #111; /* Arlen: WCAG 2019 */
+  border: 1px solid #ddd;
+  border-radius: 3px;
+  margin: 1em 0;
+}
+blockquote > *:last-child {
+  margin-bottom: 0;
+}
+cite {
+  display: block;
+  text-align: right;
+  font-style: italic;
+}
+.xref {
+  overflow-wrap: normal;
+}
+
+/* tables */
+table {
+  width: 100%;
+  margin: 0 0 1em;
+  border-collapse: collapse;
+  border: 1px solid #eee;
+}
+th, td {
+  text-align: left;
+  vertical-align: top;
+  padding: 0.5em 0.75em;
+}
+th {
+  text-align: left;
+  background-color: #e9e9e9;
+}
+tr:nth-child(2n+1) > td {
+  background-color: #f5f5f5;
+}
+table caption {
+  font-style: italic;
+  margin: 0;
+  padding: 0;
+  text-align: left;
+}
+table p {
+  /* XXX to avoid bottom margin on table row signifiers. If paragraphs should
+     be allowed within tables more generally, it would be far better to select on a class. */
+  margin: 0;
+}
+
+/* pilcrow */
+a.pilcrow {
+  color: #666; /* Arlen: AHDJ 2019 */
+  text-decoration: none;
+  visibility: hidden;
+  user-select: none;
+  -ms-user-select: none;
+  -o-user-select:none;
+  -moz-user-select: none;
+  -khtml-user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+@media screen {
+  aside:hover > a.pilcrow,
+  p:hover > a.pilcrow,
+  blockquote:hover > a.pilcrow,
+  div:hover > a.pilcrow,
+  li:hover > a.pilcrow,
+  pre:hover > a.pilcrow {
+    visibility: visible;
+  }
+  a.pilcrow:hover {
+    background-color: transparent;
+  }
+}
+
+/* misc */
+hr {
+  border: 0;
+  border-top: 1px solid #eee;
+}
+.bcp14 {
+  font-variant: small-caps;
+}
+
+.role {
+  font-variant: all-small-caps;
+}
+
+/* info block */
+#identifiers {
+  margin: 0;
+  font-size: 0.9em;
+}
+#identifiers dt {
+  width: 3em;
+  clear: left;
+}
+#identifiers dd {
+  float: left;
+  margin-bottom: 0;
+}
+/* Fix PDF info block run off issue */
+@media print {
+  #identifiers dd {
+    max-width: 100%;
+  }
+}
+#identifiers .authors .author {
+  display: inline-block;
+  margin-right: 1.5em;
+}
+#identifiers .authors .org {
+  font-style: italic;
+}
+
+/* The prepared/rendered info at the very bottom of the page */
+.docInfo {
+  color: #666; /* Arlen: WCAG 2019 */
+  font-size: 0.9em;
+  font-style: italic;
+  margin-top: 2em;
+}
+.docInfo .prepared {
+  float: left;
+}
+.docInfo .prepared {
+  float: right;
+}
+
+/* table of contents */
+#toc  {
+  padding: 0.75em 0 2em 0;
+  margin-bottom: 1em;
+}
+nav.toc ul {
+  margin: 0 0.5em 0 0;
+  padding: 0;
+  list-style: none;
+}
+nav.toc li {
+  line-height: 1.3em;
+  margin: 0.75em 0;
+  padding-left: 1.2em;
+  text-indent: -1.2em;
+}
+/* references */
+.references dt {
+  text-align: right;
+  font-weight: bold;
+  min-width: 7em;
+}
+.references dd {
+  margin-left: 8em;
+  overflow: auto;
+}
+
+.refInstance {
+  margin-bottom: 1.25em;
+}
+
+.refSubseries {
+  margin-bottom: 1.25em;
+}
+
+.references .ascii {
+  margin-bottom: 0.25em;
+}
+
+/* index */
+.index ul {
+  margin: 0 0 0 1em;
+  padding: 0;
+  list-style: none;
+}
+.index ul ul {
+  margin: 0;
+}
+.index li {
+  margin: 0;
+  text-indent: -2em;
+  padding-left: 2em;
+  padding-bottom: 5px;
+}
+.indexIndex {
+  margin: 0.5em 0 1em;
+}
+.index a {
+  font-weight: 700;
+}
+/* make the index two-column on all but the smallest screens */
+@media (min-width: 600px) {
+  .index ul {
+    -moz-column-count: 2;
+    -moz-column-gap: 20px;
+  }
+  .index ul ul {
+    -moz-column-count: 1;
+    -moz-column-gap: 0;
+  }
+}
+
+/* authors */
+address.vcard {
+  font-style: normal;
+  margin: 1em 0;
+}
+
+address.vcard .nameRole {
+  font-weight: 700;
+  margin-left: 0;
+}
+address.vcard .label {
+  font-family: var(--font-sans);
+  margin: 0.5em 0;
+}
+address.vcard .type {
+  display: none;
+}
+.alternative-contact {
+  margin: 1.5em 0 1em;
+}
+hr.addr {
+  border-top: 1px dashed;
+  margin: 0;
+  color: #ddd;
+  max-width: calc(100% - 16px);
+}
+
+/* temporary notes */
+.rfcEditorRemove::before {
+  position: absolute;
+  top: 0.2em;
+  right: 0.2em;
+  padding: 0.2em;
+  content: "The RFC Editor will remove this note";
+  color: #9e2a00; /* Arlen: WCAG 2019 */
+  background-color: #ffd; /* Arlen: WCAG 2019 */
+}
+.rfcEditorRemove {
+  position: relative;
+  padding-top: 1.8em;
+  background-color: #ffd; /* Arlen: WCAG 2019 */
+  border-radius: 3px;
+}
+.cref {
+  background-color: #ffd; /* Arlen: WCAG 2019 */
+  padding: 2px 4px;
+}
+.crefSource {
+  font-style: italic;
+}
+/* alternative layout for smaller screens */
+@media screen and (max-width: 1023px) {
+  body {
+    padding-top: 2em;
+  }
+  #title {
+    padding: 1em 0;
+  }
+  h1 {
+    font-size: 24px;
+  }
+  h2 {
+    font-size: 20px;
+    margin-top: -18px;  /* provide offset for in-page anchors */
+    padding-top: 38px;
+  }
+  #identifiers dd {
+    max-width: 60%;
+  }
+  #toc {
+    position: fixed;
+    z-index: 2;
+    top: 0;
+    right: 0;
+    padding: 0;
+    margin: 0;
+    background-color: inherit;
+    border-bottom: 1px solid #ccc;
+  }
+  #toc h2 {
+    margin: -1px 0 0 0;
+    padding: 4px 0 4px 6px;
+    padding-right: 1em;
+    min-width: 190px;
+    font-size: 1.1em;
+    text-align: right;
+    background-color: #444;
+    color: white;
+    cursor: pointer;
+  }
+  #toc h2::before { /* css hamburger */
+    float: right;
+    position: relative;
+    width: 1em;
+    height: 1px;
+    left: -164px;
+    margin: 6px 0 0 0;
+    background: white none repeat scroll 0 0;
+    box-shadow: 0 4px 0 0 white, 0 8px 0 0 white;
+    content: "";
+  }
+  #toc nav {
+    display: none;
+    padding: 0.5em 1em 1em;
+    overflow: auto;
+    height: calc(100vh - 48px);
+    border-left: 1px solid #ddd;
+  }
+}
+
+/* alternative layout for wide screens */
+@media screen and (min-width: 1024px) {
+  body {
+    max-width: 724px;
+    margin: 42px auto;
+    padding-left: 1.5em;
+    padding-right: 29em;
+  }
+  #toc {
+    position: fixed;
+    top: 42px;
+    right: 42px;
+    width: 25%;
+    margin: 0;
+    padding: 0 1em;
+    z-index: 1;
+  }
+  #toc h2 {
+    border-top: none;
+    border-bottom: 1px solid #ddd;
+    font-size: 1em;
+    font-weight: normal;
+    margin: 0;
+    padding: 0.25em 1em 1em 0;
+  }
+  #toc nav {
+    display: block;
+    height: calc(90vh - 84px);
+    bottom: 0;
+    padding: 0.5em 0 0;
+    overflow: auto;
+  }
+  img { /* future proofing */
+    max-width: 100%;
+    height: auto;
+  }
+}
+
+/* pagination */
+@media print {
+  body {
+    width: 100%;
+  }
+  p {
+    orphans: 3;
+    widows: 3;
+  }
+  #n-copyright-notice {
+    border-bottom: none;
+  }
+  #toc, #n-introduction {
+    page-break-before: always;
+  }
+  #toc {
+    border-top: none;
+    padding-top: 0;
+  }
+  figure, pre {
+    page-break-inside: avoid;
+  }
+  figure {
+    overflow: scroll;
+  }
+  .breakable pre {
+    break-inside: auto;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    page-break-after: avoid;
+  }
+  h2+*, h3+*, h4+*, h5+*, h6+* {
+    page-break-before: avoid;
+  }
+  pre {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    font-size: 10pt;
+  }
+  table {
+    border: 1px solid #ddd;
+  }
+  td {
+    border-top: 1px solid #ddd;
+  }
+}
+
+/* This is commented out here, as the string-set: doesn't
+   pass W3C validation currently */
+/*
+.ears thead .left {
+  string-set: ears-top-left content();
+}
+
+.ears thead .center {
+  string-set: ears-top-center content();
+}
+
+.ears thead .right {
+  string-set: ears-top-right content();
+}
+
+.ears tfoot .left {
+  string-set: ears-bottom-left content();
+}
+
+.ears tfoot .center {
+  string-set: ears-bottom-center content();
+}
+
+.ears tfoot .right {
+  string-set: ears-bottom-right content();
+}
+*/
+
+@page :first {
+  padding-top: 0;
+  @top-left {
+    content: normal;
+    border: none;
+  }
+  @top-center {
+    content: normal;
+    border: none;
+  }
+  @top-right {
+    content: normal;
+    border: none;
+  }
+}
+
+@page {
+  size: A4;
+  margin-bottom: 45mm;
+  padding-top: 20px;
+  /* The following is commented out here, but set appropriately by in code, as
+     the content depends on the document */
+  /*
+  @top-left {
+    content: 'Internet-Draft';
+    vertical-align: bottom;
+    border-bottom: solid 1px #ccc;
+  }
+  @top-left {
+    content: string(ears-top-left);
+    vertical-align: bottom;
+    border-bottom: solid 1px #ccc;
+  }
+  @top-center {
+    content: string(ears-top-center);
+    vertical-align: bottom;
+    border-bottom: solid 1px #ccc;
+  }
+  @top-right {
+    content: string(ears-top-right);
+    vertical-align: bottom;
+    border-bottom: solid 1px #ccc;
+  }
+  @bottom-left {
+    content: string(ears-bottom-left);
+    vertical-align: top;
+    border-top: solid 1px #ccc;
+  }
+  @bottom-center {
+    content: string(ears-bottom-center);
+    vertical-align: top;
+    border-top: solid 1px #ccc;
+  }
+  @bottom-right {
+      content: '[Page ' counter(page) ']';
+      vertical-align: top;
+      border-top: solid 1px #ccc;
+  }
+  */
+
+}
+
+/* Changes introduced to fix issues found during implementation */
+/* Make sure links are clickable even if overlapped by following H* */
+a {
+  z-index: 2;
+}
+/* Separate body from document info even without intervening H1 */
+section {
+  clear: both;
+}
+
+
+/* Top align author divs, to avoid names without organization dropping level with org names */
+.author {
+  vertical-align: top;
+}
+
+/* Leave room in document info to show Internet-Draft on one line */
+#identifiers dt {
+  width: 8em;
+}
+
+/* Don't waste quite as much whitespace between label and value in doc info */
+#identifiers dd {
+  margin-left: 1em;
+}
+
+/* Give floating toc a background color (needed when it's a div inside section */
+#toc {
+  background-color: white;
+}
+
+/* Make the collapsed ToC header render white on gray also when it's a link */
+@media screen and (max-width: 1023px) {
+  #toc h2 a,
+  #toc h2 a:link,
+  #toc h2 a:focus,
+  #toc h2 a:hover,
+  #toc a.toplink,
+  #toc a.toplink:hover {
+    color: white;
+    background-color: #444;
+    text-decoration: none;
+  }
+}
+
+/* Give the bottom of the ToC some whitespace */
+@media screen and (min-width: 1024px) {
+  #toc {
+    padding: 0 0 1em 1em;
+  }
+}
+
+/* Style section numbers with more space between number and title */
+.section-number {
+  padding-right: 0.5em;
+}
+
+/* prevent monospace from becoming overly large */
+tt, code, pre {
+  font-size: 95%;
+}
+
+/* Fix the height/width aspect for ascii art*/
+.sourcecode pre,
+.art-text pre {
+  line-height: 1.12;
+}
+
+
+/* Add styling for a link in the ToC that points to the top of the document */
+a.toplink {
+  float: right;
+  margin-right: 0.5em;
+}
+
+/* Fix the dl styling to match the RFC 7992 attributes */
+dl > dt,
+dl.dlParallel > dt {
+  float: left;
+  margin-right: 1em;
+}
+dl.dlNewline > dt {
+  float: none;
+}
+
+/* Provide styling for table cell text alignment */
+table td.text-left,
+table th.text-left {
+  text-align: left;
+}
+table td.text-center,
+table th.text-center {
+  text-align: center;
+}
+table td.text-right,
+table th.text-right {
+  text-align: right;
+}
+
+/* Make the alternative author contact information look less like just another
+   author, and group it closer with the primary author contact information */
+.alternative-contact {
+  margin: 0.5em 0 0.25em 0;
+}
+address .non-ascii {
+  margin: 0 0 0 2em;
+}
+
+/* With it being possible to set tables with alignment
+  left, center, and right, { width: 100%; } does not make sense */
+table {
+  width: auto;
+}
+
+/* Avoid reference text that sits in a block with very wide left margin,
+   because of a long floating dt label.*/
+.references dd {
+  overflow: visible;
+}
+
+/* Control caption placement */
+caption {
+  caption-side: bottom;
+}
+
+/* Limit the width of the author address vcard, so names in right-to-left
+   script don't end up on the other side of the page. */
+
+address.vcard {
+  max-width: 30em;
+  margin-right: auto;
+}
+
+/* For address alignment dependent on LTR or RTL scripts */
+address div.left {
+  text-align: left;
+}
+address div.right {
+  text-align: right;
+}
+
+/* Provide table alignment support.  We can't use the alignX classes above
+   since they do unwanted things with caption and other styling. */
+table.right {
+ margin-left: auto;
+ margin-right: 0;
+}
+table.center {
+ margin-left: auto;
+ margin-right: auto;
+}
+table.left {
+ margin-left: 0;
+ margin-right: auto;
+}
+
+/* Give the table caption label the same styling as the figcaption */
+caption a[href] {
+  color: #222;
+}
+
+@media print {
+  .toplink {
+    display: none;
+  }
+
+  /* avoid overwriting the top border line with the ToC header */
+  #toc {
+    padding-top: 1px;
+  }
+
+  /* Avoid page breaks inside dl and author address entries */
+  .vcard {
+    page-break-inside: avoid;
+  }
+
+}
+/* Tweak the bcp14 keyword presentation */
+.bcp14 {
+  font-variant: small-caps;
+  font-weight: bold;
+  font-size: 0.9em;
+}
+/* Tweak the invisible space above H* in order not to overlay links in text above */
+ h2 {
+  margin-top: -18px;  /* provide offset for in-page anchors */
+  padding-top: 31px;
+ }
+ h3 {
+  margin-top: -18px;  /* provide offset for in-page anchors */
+  padding-top: 24px;
+ }
+ h4 {
+  margin-top: -18px;  /* provide offset for in-page anchors */
+  padding-top: 24px;
+ }
+/* Float artwork pilcrow to the right */
+@media screen {
+  .artwork a.pilcrow {
+    display: block;
+    line-height: 0.7;
+    margin-top: 0.15em;
+  }
+}
+/* Make pilcrows on dd visible */
+@media screen {
+  dd:hover > a.pilcrow {
+    visibility: visible;
+  }
+}
+/* Make the placement of figcaption match that of a table's caption
+   by removing the figure's added bottom margin */
+.alignLeft.art-text,
+.alignCenter.art-text,
+.alignRight.art-text {
+   margin-bottom: 0;
+}
+.alignLeft,
+.alignCenter,
+.alignRight {
+  margin: 1em 0 0 0;
+}
+/* In print, the pilcrow won't show on hover, so prevent it from taking up space,
+   possibly even requiring a new line */
+@media print {
+  a.pilcrow {
+    display: none;
+  }
+}
+/* Styling for the external metadata */
+div#external-metadata {
+  background-color: #eee;
+  padding: 0.5em;
+  margin-bottom: 0.5em;
+  display: none;
+}
+div#internal-metadata {
+  padding: 0.5em;                       /* to match the external-metadata padding */
+}
+/* Styling for title RFC Number */
+h1#rfcnum {
+  clear: both;
+  margin: 0 0 -1em;
+  padding: 1em 0 0 0;
+}
+/* Make .olPercent look the same as <ol><li> */
+dl.olPercent > dd {
+  margin-bottom: 0.25em;
+  min-height: initial;
+}
+/* Give aside some styling to set it apart */
+aside {
+  border-left: 1px solid #ddd;
+  margin: 1em 0 1em 2em;
+  padding: 0.2em 2em;
+}
+aside > dl,
+aside > ol,
+aside > ul,
+aside > table,
+aside > p {
+  margin-bottom: 0.5em;
+}
+/* Additional page break settings */
+@media print {
+  figcaption, table caption {
+    page-break-before: avoid;
+  }
+}
+/* Font size adjustments for print */
+@media print {
+  body  { font-size: 10pt;      line-height: normal; max-width: 96%; }
+  h1    { font-size: 1.72em;    padding-top: 1.5em; } /* 1*1.2*1.2*1.2 */
+  h2    { font-size: 1.44em;    padding-top: 1.5em; } /* 1*1.2*1.2 */
+  h3    { font-size: 1.2em;     padding-top: 1.5em; } /* 1*1.2 */
+  h4    { font-size: 1em;       padding-top: 1.5em; }
+  h5, h6 { font-size: 1em;      margin: initial; padding: 0.5em 0 0.3em; }
+}
+/* Sourcecode margin in print, when there's no pilcrow */
+@media print {
+  .artwork,
+  .artwork > pre,
+  .sourcecode {
+    margin-bottom: 1em;
+  }
+}
+/* Avoid narrow tables forcing too narrow table captions, which may render badly */
+table {
+  min-width: 20em;
+}
+/* ol type a */
+ol.type-a { list-style-type: lower-alpha; }
+ol.type-A { list-style-type: upper-alpha; }
+ol.type-i { list-style-type: lower-roman; }
+ol.type-I { list-style-type: upper-roman; }
+/* Apply the print table and row borders in general, on request from the RPC,
+and increase the contrast between border and odd row background slightly */
+table {
+  border: 1px solid #ddd;
+}
+td {
+  border-top: 1px solid #ddd;
+}
+tr {
+  break-inside: avoid;
+}
+tr:nth-child(2n+1) > td {
+  background-color: #f8f8f8;
+}
+/* Use style rules to govern display of the TOC. */
+@media screen and (max-width: 1023px) {
+  #toc nav { display: none; }
+  #toc.active nav { display: block; }
+}
+/* Add support for keepWithNext */
+.keepWithNext {
+  break-after: avoid-page;
+  break-after: avoid-page;
+}
+/* Add support for keepWithPrevious */
+.keepWithPrevious {
+  break-before: avoid-page;
+}
+/* Change the approach to avoiding breaks inside artwork etc. */
+figure, pre, table, .artwork, .sourcecode  {
+  break-before: auto;
+  break-after: auto;
+}
+/* Avoid breaks between <dt> and <dd> */
+dl {
+  break-before: auto;
+  break-inside: auto;
+}
+dt {
+  break-before: auto;
+  break-after: avoid-page;
+}
+dd {
+  break-before: avoid-page;
+  break-after: auto;
+  orphans: 3;
+  widows: 3
+}
+span.break, dd.break {
+  margin-bottom: 0;
+  min-height: 0;
+  break-before: auto;
+  break-inside: auto;
+  break-after: auto;
+}
+/* Undo break-before ToC */
+@media print {
+  #toc {
+    break-before: auto;
+  }
+}
+/* Text in compact lists should not get extra bottom margin space,
+   since that would makes the list not compact */
+ul.compact p, .ulCompact p,
+ol.compact p, .olCompact p {
+ margin: 0;
+}
+/* But the list as a whole needs the extra space at the end */
+section ul.compact,
+section .ulCompact,
+section ol.compact,
+section .olCompact {
+  margin-bottom: 1em;                    /* same as p not within ul.compact etc. */
+}
+/* The tt and code background above interferes with for instance table cell
+   backgrounds.  Changed to something a bit more selective. */
+tt, code {
+  background-color: transparent;
+}
+p tt, p code, li tt, li code, dt tt, dt code {
+  background-color: #f8f8f8;
+}
+/* Tweak the pre margin -- 0px doesn't come out well */
+pre {
+   margin-top: 0.5px;
+}
+/* Tweak the compact list text */
+ul.compact, .ulCompact,
+ol.compact, .olCompact,
+dl.compact, .dlCompact {
+  line-height: normal;
+}
+/* Don't add top margin for nested lists */
+li > ul, li > ol, li > dl,
+dd > ul, dd > ol, dd > dl,
+dl > dd > dl {
+  margin-top: initial;
+}
+/* Elements that should not be rendered on the same line as a <dt> */
+/* This should match the element list in writer.text.TextWriter.render_dl() */
+dd > div.artwork:first-child,
+dd > aside:first-child,
+dd > blockquote:first-child,
+dd > figure:first-child,
+dd > ol:first-child,
+dd > div.sourcecode:first-child,
+dd > table:first-child,
+dd > ul:first-child {
+  clear: left;
+}
+/* fix for weird browser behaviour when <dd/> is empty */
+dt+dd:empty::before{
+  content: "\00a0";
+}
+/* Make paragraph spacing inside <li> smaller than in body text, to fit better within the list */
+li > p {
+  margin-bottom: 0.5em
+}
+/* Don't let p margin spill out from inside list items */
+li > p:last-of-type:only-child {
+  margin-bottom: 0;
+}
+</style>
+<link href="rfc-local.css" rel="stylesheet" type="text/css">
+<script type="application/javascript">async function addMetadata(){try{const e=document.styleSheets[0].cssRules;for(let t=0;t<e.length;t++)if(/#identifiers/.exec(e[t].selectorText)){const a=e[t].cssText.replace("#identifiers","#external-updates");document.styleSheets[0].insertRule(a,document.styleSheets[0].cssRules.length)}}catch(e){console.log(e)}const e=document.getElementById("external-metadata");if(e)try{var t,a="",o=function(e){const t=document.getElementsByTagName("meta");for(let a=0;a<t.length;a++)if(t[a].getAttribute("name")===e)return t[a].getAttribute("content");return""}("rfc.number");if(o){t="https://www.rfc-editor.org/rfc/rfc"+o+".json";try{const e=await fetch(t);a=await e.json()}catch(e){t=document.URL.indexOf("html")>=0?document.URL.replace(/html$/,"json"):document.URL+".json";const o=await fetch(t);a=await o.json()}}if(!a)return;e.style.display="block";const s="",d="https://datatracker.ietf.org/doc",n="https://datatracker.ietf.org/ipr/search",c="https://www.rfc-editor.org/info",l=a.doc_id.toLowerCase(),i=a.doc_id.slice(0,3).toLowerCase(),f=a.doc_id.slice(3).replace(/^0+/,""),u={status:"Status",obsoletes:"Obsoletes",obsoleted_by:"Obsoleted By",updates:"Updates",updated_by:"Updated By",see_also:"See Also",errata_url:"Errata"};let h="<dl style='overflow:hidden' id='external-updates'>";["status","obsoletes","obsoleted_by","updates","updated_by","see_also","errata_url"].forEach(e=>{if("status"==e){a[e]=a[e].toLowerCase();var t=a[e].split(" "),o=t.length,w="",p=1;for(let e=0;e<o;e++)p<o?w=w+r(t[e])+" ":w+=r(t[e]),p++;a[e]=w}else if("obsoletes"==e||"obsoleted_by"==e||"updates"==e||"updated_by"==e){var g,m="",b=1;g=a[e].length;for(let t=0;t<g;t++)a[e][t]&&(a[e][t]=String(a[e][t]).toLowerCase(),m=b<g?m+"<a href='"+s+"/rfc/".concat(a[e][t])+"'>"+a[e][t].slice(3)+"</a>, ":m+"<a href='"+s+"/rfc/".concat(a[e][t])+"'>"+a[e][t].slice(3)+"</a>",b++);a[e]=m}else if("see_also"==e){var y,L="",C=1;y=a[e].length;for(let t=0;t<y;t++)if(a[e][t]){a[e][t]=String(a[e][t]);var _=a[e][t].slice(0,3),v=a[e][t].slice(3).replace(/^0+/,"");L=C<y?"RFC"!=_?L+"<a href='"+s+"/info/"+_.toLowerCase().concat(v.toLowerCase())+"'>"+_+" "+v+"</a>, ":L+"<a href='"+s+"/info/"+_.toLowerCase().concat(v.toLowerCase())+"'>"+v+"</a>, ":"RFC"!=_?L+"<a href='"+s+"/info/"+_.toLowerCase().concat(v.toLowerCase())+"'>"+_+" "+v+"</a>":L+"<a href='"+s+"/info/"+_.toLowerCase().concat(v.toLowerCase())+"'>"+v+"</a>",C++}a[e]=L}else if("errata_url"==e){var R="";R=a[e]?R+"<a href='"+a[e]+"'>Errata exist</a> | <a href='"+d+"/"+l+"'>Datatracker</a>| <a href='"+n+"/?"+i+"="+f+"&submit="+i+"'>IPR</a> | <a href='"+c+"/"+l+"'>Info page</a>":"<a href='"+d+"/"+l+"'>Datatracker</a> | <a href='"+n+"/?"+i+"="+f+"&submit="+i+"'>IPR</a> | <a href='"+c+"/"+l+"'>Info page</a>",a[e]=R}""!=a[e]?"Errata"==u[e]?h+=`<dt>More info:</dt><dd>${a[e]}</dd>`:h+=`<dt>${u[e]}:</dt><dd>${a[e]}</dd>`:"Errata"==u[e]&&(h+=`<dt>More info:</dt><dd>${a[e]}</dd>`)}),h+="</dl>",e.innerHTML=h}catch(e){console.log(e)}else console.log("Could not locate metadata <div> element");function r(e){return e.charAt(0).toUpperCase()+e.slice(1)}}window.removeEventListener("load",addMetadata),window.addEventListener("load",addMetadata);</script>
+</head>
+<body class="xml2rfc">
+<table class="ears">
+<thead><tr>
+<td class="left">Internet-Draft</td>
+<td class="center">RUUID</td>
+<td class="right">May 2026</td>
+</tr></thead>
+<tfoot><tr>
+<td class="left">Mottershead</td>
+<td class="center">Expires 28 November 2026</td>
+<td class="right">[Page]</td>
+</tr></tfoot>
+</table>
+<div id="external-metadata" class="document-information"></div>
+<div id="internal-metadata" class="document-information">
+<dl id="identifiers">
+<dt class="label-workgroup">Workgroup:</dt>
+<dd class="workgroup">Network Working Group</dd>
+<dt class="label-internet-draft">Internet-Draft:</dt>
+<dd class="internet-draft">draft-motters-ruuid-00</dd>
+<dt class="label-published">Published:</dt>
+<dd class="published">
+<time datetime="2026-05-27" class="published">27 May 2026</time>
+    </dd>
+<dt class="label-intended-status">Intended Status:</dt>
+<dd class="intended-status">Standards Track</dd>
+<dt class="label-expires">Expires:</dt>
+<dd class="expires"><time datetime="2026-11-28">28 November 2026</time></dd>
+<dt class="label-authors">Author:</dt>
+<dd class="authors">
+<div class="author">
+      <div class="author-name">B. Mottershead</div>
+</div>
+</dd>
+</dl>
+</div>
+<h1 id="title">Resolvable Universally Unique Identifiers (RUUID)</h1>
+<section id="section-abstract">
+      <h2 id="abstract"><a href="#abstract" class="selfRef">Abstract</a></h2>
+<p id="section-abstract-1">This document defines Resolvable Universally Unique Identifiers
+(RUUIDs): a UUID format encoding a 64-bit IPv6 network prefix, a
+48-bit identifier, and a 10-bit type. A resolver uses reverse DNS
+on the network prefix to discover the associated domain and, via
+that domain's "UUID document", constructs a URI of the referent.
+Defaults for both the document location and the referent URI
+template mean that when URLs follow the canonical convention,
+nothing beyond a reverse-DNS PTR record needs to be published;
+resolution degrades gracefully when configuration is missing.<a href="#section-abstract-1" class="pilcrow">¶</a></p>
+<p id="section-abstract-2">The 64-bit network field carries an IPv6 /64 prefix directly. An IPv4
+/32 is encoded as the corresponding 6to4 prefix (<span>[<a href="#RFC3056" class="cite xref">RFC3056</a>]</span>).  RUUIDs
+are 128 bits in the standard UUID textual form. Pending a dedicated
+UUID version, they use the RFC 9562 experimental version 8 with
+variant 10, so existing UUID parsers recognise them as well-formed
+UUIDs.<a href="#section-abstract-2" class="pilcrow">¶</a></p>
+</section>
+<div id="status-of-memo">
+<section id="section-boilerplate.1">
+        <h2 id="name-status-of-this-memo">
+<a href="#name-status-of-this-memo" class="section-name selfRef">Status of This Memo</a>
+        </h2>
+<p id="section-boilerplate.1-1">
+        This Internet-Draft is submitted in full conformance with the
+        provisions of BCP 78 and BCP 79.<a href="#section-boilerplate.1-1" class="pilcrow">¶</a></p>
+<p id="section-boilerplate.1-2">
+        Internet-Drafts are working documents of the Internet Engineering Task
+        Force (IETF). Note that other groups may also distribute working
+        documents as Internet-Drafts. The list of current Internet-Drafts is
+        at <span><a href="https://datatracker.ietf.org/drafts/current/">https://datatracker.ietf.org/drafts/current/</a></span>.<a href="#section-boilerplate.1-2" class="pilcrow">¶</a></p>
+<p id="section-boilerplate.1-3">
+        Internet-Drafts are draft documents valid for a maximum of six months
+        and may be updated, replaced, or obsoleted by other documents at any
+        time. It is inappropriate to use Internet-Drafts as reference
+        material or to cite them other than as "work in progress."<a href="#section-boilerplate.1-3" class="pilcrow">¶</a></p>
+<p id="section-boilerplate.1-4">
+        This Internet-Draft will expire on 28 November 2026.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="copyright">
+<section id="section-boilerplate.2">
+        <h2 id="name-copyright-notice">
+<a href="#name-copyright-notice" class="section-name selfRef">Copyright Notice</a>
+        </h2>
+<p id="section-boilerplate.2-1">
+            Copyright (c) 2026 IETF Trust and the persons identified as the
+            document authors. All rights reserved.<a href="#section-boilerplate.2-1" class="pilcrow">¶</a></p>
+<p id="section-boilerplate.2-2">
+            This document is subject to BCP 78 and the IETF Trust's Legal
+            Provisions Relating to IETF Documents
+            (<span><a href="https://trustee.ietf.org/license-info">https://trustee.ietf.org/license-info</a></span>) in effect on the date of
+            publication of this document. Please review these documents
+            carefully, as they describe your rights and restrictions with
+            respect to this document. Code Components extracted from this
+            document must include Revised BSD License text as described in
+            Section 4.e of the Trust Legal Provisions and are provided without
+            warranty as described in the Revised BSD License.<a href="#section-boilerplate.2-2" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="toc">
+<section id="section-toc.1">
+        <a href="#" onclick="scroll(0,0)" class="toplink">▲</a><h2 id="name-table-of-contents">
+<a href="#name-table-of-contents" class="section-name selfRef">Table of Contents</a>
+        </h2>
+<nav class="toc"><ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.1">
+            <p id="section-toc.1-1.1.1" class="keepWithNext"><a href="#section-1" class="auto internal xref">1</a>.  <a href="#name-introduction" class="internal xref">Introduction</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.1.2.1">
+                <p id="section-toc.1-1.1.2.1.1" class="keepWithNext"><a href="#section-1.1" class="auto internal xref">1.1</a>.  <a href="#name-relation-to-other-identifie" class="internal xref">Relation to other identifier systems</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.1.2.2">
+                <p id="section-toc.1-1.1.2.2.1" class="keepWithNext"><a href="#section-1.2" class="auto internal xref">1.2</a>.  <a href="#name-applicability" class="internal xref">Applicability</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.2">
+            <p id="section-toc.1-1.2.1"><a href="#section-2" class="auto internal xref">2</a>.  <a href="#name-conventions-and-terminology" class="internal xref">Conventions and Terminology</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3">
+            <p id="section-toc.1-1.3.1"><a href="#section-3" class="auto internal xref">3</a>.  <a href="#name-ruuid-format" class="internal xref">RUUID Format</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.1">
+                <p id="section-toc.1-1.3.2.1.1"><a href="#section-3.1" class="auto internal xref">3.1</a>.  <a href="#name-bit-layout" class="internal xref">Bit layout</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.2">
+                <p id="section-toc.1-1.3.2.2.1"><a href="#section-3.2" class="auto internal xref">3.2</a>.  <a href="#name-the-network-prefix" class="internal xref">The network prefix</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.3">
+                <p id="section-toc.1-1.3.2.3.1"><a href="#section-3.3" class="auto internal xref">3.3</a>.  <a href="#name-version-and-variant" class="internal xref">Version and variant</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.4">
+                <p id="section-toc.1-1.3.2.4.1"><a href="#section-3.4" class="auto internal xref">3.4</a>.  <a href="#name-type" class="internal xref">Type</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4">
+            <p id="section-toc.1-1.4.1"><a href="#section-4" class="auto internal xref">4</a>.  <a href="#name-resolution" class="internal xref">Resolution</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.1">
+                <p id="section-toc.1-1.4.2.1.1"><a href="#section-4.1" class="auto internal xref">4.1</a>.  <a href="#name-overview" class="internal xref">Overview</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.2">
+                <p id="section-toc.1-1.4.2.2.1"><a href="#section-4.2" class="auto internal xref">4.2</a>.  <a href="#name-registry-endpoints" class="internal xref">Registry endpoints</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.2.2.1">
+                    <p id="section-toc.1-1.4.2.2.2.1.1"><a href="#section-4.2.1" class="auto internal xref">4.2.1</a>.  <a href="#name-endpoint-configuration" class="internal xref">Endpoint configuration</a></p>
+</li>
+                </ul>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.3">
+                <p id="section-toc.1-1.4.2.3.1"><a href="#section-4.3" class="auto internal xref">4.3</a>.  <a href="#name-reverse-dns-name-constructi" class="internal xref">Reverse-DNS name construction</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.4">
+                <p id="section-toc.1-1.4.2.4.1"><a href="#section-4.4" class="auto internal xref">4.4</a>.  <a href="#name-uuid-document-resolution" class="internal xref">UUID document resolution</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.4.2.1">
+                    <p id="section-toc.1-1.4.2.4.2.1.1"><a href="#section-4.4.1" class="auto internal xref">4.4.1</a>.  <a href="#name-default-document-uri" class="internal xref">Default document URI</a></p>
+</li>
+                </ul>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.5">
+                <p id="section-toc.1-1.4.2.5.1"><a href="#section-4.5" class="auto internal xref">4.5</a>.  <a href="#name-registry-http-api-endpoint" class="internal xref">Registry HTTP API endpoint</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.6">
+                <p id="section-toc.1-1.4.2.6.1"><a href="#section-4.6" class="auto internal xref">4.6</a>.  <a href="#name-referent-uri-construction" class="internal xref">Referent URI construction</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.6.2.1">
+                    <p id="section-toc.1-1.4.2.6.2.1.1"><a href="#section-4.6.1" class="auto internal xref">4.6.1</a>.  <a href="#name-template-selection" class="internal xref">Template selection</a></p>
+</li>
+                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.6.2.2">
+                    <p id="section-toc.1-1.4.2.6.2.2.1"><a href="#section-4.6.2" class="auto internal xref">4.6.2</a>.  <a href="#name-default-template" class="internal xref">Default template</a></p>
+</li>
+                  <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.6.2.3">
+                    <p id="section-toc.1-1.4.2.6.2.3.1"><a href="#section-4.6.3" class="auto internal xref">4.6.3</a>.  <a href="#name-placeholder-substitution" class="internal xref">Placeholder substitution</a></p>
+</li>
+                </ul>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5">
+            <p id="section-toc.1-1.5.1"><a href="#section-5" class="auto internal xref">5</a>.  <a href="#name-txt-record-format" class="internal xref">TXT Record Format</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6">
+            <p id="section-toc.1-1.6.1"><a href="#section-6" class="auto internal xref">6</a>.  <a href="#name-uuid-document" class="internal xref">UUID Document</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.1">
+                <p id="section-toc.1-1.6.2.1.1"><a href="#section-6.1" class="auto internal xref">6.1</a>.  <a href="#name-document-fetch" class="internal xref">Document fetch</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.2">
+                <p id="section-toc.1-1.6.2.2.1"><a href="#section-6.2" class="auto internal xref">6.2</a>.  <a href="#name-document-structure-and-evol" class="internal xref">Document structure and evolution</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.3">
+                <p id="section-toc.1-1.6.2.3.1"><a href="#section-6.3" class="auto internal xref">6.3</a>.  <a href="#name-verification-fields" class="internal xref">Verification fields</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.4">
+                <p id="section-toc.1-1.6.2.4.1"><a href="#section-6.4" class="auto internal xref">6.4</a>.  <a href="#name-service-entries-per-type-re" class="internal xref">Service entries (per-type referent templates)</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.4.2.1">
+                    <p id="section-toc.1-1.6.2.4.2.1.1"><a href="#section-6.4.1" class="auto internal xref">6.4.1</a>.  <a href="#name-type-entry-fields" class="internal xref">Type entry fields</a></p>
+</li>
+                </ul>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.5">
+                <p id="section-toc.1-1.6.2.5.1"><a href="#section-6.5" class="auto internal xref">6.5</a>.  <a href="#name-the-diduuid-did-method" class="internal xref">The did:uuid DID method</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.7">
+            <p id="section-toc.1-1.7.1"><a href="#section-7" class="auto internal xref">7</a>.  <a href="#name-generation-considerations" class="internal xref">Generation Considerations</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.7.2.1">
+                <p id="section-toc.1-1.7.2.1.1"><a href="#section-7.1" class="auto internal xref">7.1</a>.  <a href="#name-network-prefix-semantics" class="internal xref">Network prefix semantics</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.7.2.2">
+                <p id="section-toc.1-1.7.2.2.1"><a href="#section-7.2" class="auto internal xref">7.2</a>.  <a href="#name-uniqueness" class="internal xref">Uniqueness</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.7.2.3">
+                <p id="section-toc.1-1.7.2.3.1"><a href="#section-7.3" class="auto internal xref">7.3</a>.  <a href="#name-identifier-construction" class="internal xref">Identifier construction</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.7.2.4">
+                <p id="section-toc.1-1.7.2.4.1"><a href="#section-7.4" class="auto internal xref">7.4</a>.  <a href="#name-collisions" class="internal xref">Collisions</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.8">
+            <p id="section-toc.1-1.8.1"><a href="#section-8" class="auto internal xref">8</a>.  <a href="#name-iana-considerations" class="internal xref">IANA Considerations</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9">
+            <p id="section-toc.1-1.9.1"><a href="#section-9" class="auto internal xref">9</a>.  <a href="#name-security-considerations" class="internal xref">Security Considerations</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9.2.1">
+                <p id="section-toc.1-1.9.2.1.1"><a href="#section-9.1" class="auto internal xref">9.1</a>.  <a href="#name-registry-endpoint-trust" class="internal xref">Registry endpoint trust</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9.2.2">
+                <p id="section-toc.1-1.9.2.2.1"><a href="#section-9.2" class="auto internal xref">9.2</a>.  <a href="#name-prefix-transfer-and-long-te" class="internal xref">Prefix transfer and long-term durability</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9.2.3">
+                <p id="section-toc.1-1.9.2.3.1"><a href="#section-9.3" class="auto internal xref">9.3</a>.  <a href="#name-privacy" class="internal xref">Privacy</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9.2.4">
+                <p id="section-toc.1-1.9.2.4.1"><a href="#section-9.4" class="auto internal xref">9.4</a>.  <a href="#name-identifier-collision" class="internal xref">Identifier collision</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9.2.5">
+                <p id="section-toc.1-1.9.2.5.1"><a href="#section-9.5" class="auto internal xref">9.5</a>.  <a href="#name-dos-surface" class="internal xref">DoS surface</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.10">
+            <p id="section-toc.1-1.10.1"><a href="#section-10" class="auto internal xref">10</a>. <a href="#name-references" class="internal xref">References</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.10.2.1">
+                <p id="section-toc.1-1.10.2.1.1"><a href="#section-10.1" class="auto internal xref">10.1</a>.  <a href="#name-normative-references" class="internal xref">Normative References</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.10.2.2">
+                <p id="section-toc.1-1.10.2.2.1"><a href="#section-10.2" class="auto internal xref">10.2</a>.  <a href="#name-informative-references" class="internal xref">Informative References</a></p>
+</li>
+            </ul>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.11">
+            <p id="section-toc.1-1.11.1"><a href="#appendix-A" class="auto internal xref"></a><a href="#name-open-issues" class="internal xref">Open issues</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.12">
+            <p id="section-toc.1-1.12.1"><a href="#appendix-B" class="auto internal xref"></a><a href="#name-authors-address" class="internal xref">Author's Address</a></p>
+</li>
+        </ul>
+</nav>
+</section>
+</div>
+<div id="introduction">
+<section id="section-1">
+      <h2 id="name-introduction">
+<a href="#section-1" class="section-number selfRef">1. </a><a href="#name-introduction" class="section-name selfRef">Introduction</a>
+      </h2>
+<p id="section-1-1">UUIDs as defined in <span>[<a href="#RFC9562" class="cite xref">RFC9562</a>]</span> are opaque: a UUID names a thing but
+says nothing about where to learn more about it. This document defines
+a <em>Resolvable UUID</em> (RUUID) that binds the UUID at generation time to
+an IP network prefix. Reverse DNS resolves that prefix to a domain, and
+a "UUID document" resolves the domain and the fields of the UUID to a
+URI of its referent, allowing the UUID to be dereferenced.<a href="#section-1-1" class="pilcrow">¶</a></p>
+<p id="section-1-2">The bytes of an RUUID fully specify the algorithm a resolver <span class="bcp14">MUST</span>
+follow; there is no fallback or probing. The default resolution path
+uses only DNS, which may include DNS-over-HTTPS, but with no new
+infrastructure required. An HTTP API is also specified, which may be
+used (<a href="#registry-http" class="auto internal xref">Section 4.5</a>) for pre-coordinated deployments, instead of
+DNS.<a href="#section-1-2" class="pilcrow">¶</a></p>
+<p id="section-1-3">An RUUID parses as a normal UUID with a well-defined version and the
+RFC 9562 variant; code that does not understand RUUIDs <span class="bcp14">SHOULD</span> treat
+them as opaque.<a href="#section-1-3" class="pilcrow">¶</a></p>
+<div id="prior-art">
+<section id="section-1.1">
+        <h3 id="name-relation-to-other-identifie">
+<a href="#section-1.1" class="section-number selfRef">1.1. </a><a href="#name-relation-to-other-identifie" class="section-name selfRef">Relation to other identifier systems</a>
+        </h3>
+<p id="section-1.1-1">Several existing schemes serve overlapping persistent-identifier
+roles. URNs (<span>[<a href="#RFC8141" class="cite xref">RFC8141</a>]</span>) are URI-form identifiers
+<code>urn:NID:NSS</code>, requiring an IANA-registered Namespace Identifier
+per namespace; resolution is not standardized at the URN layer
+and varies per namespace. W3C Decentralized Identifiers (DIDs,
+<span>[<a href="#W3C-DID" class="cite xref">W3C-DID</a>]</span>) are URIs <code>did:METHOD:ID</code> with per-method
+registration and per-method resolution rules; an RUUID can be
+expressed as a DID via the <code>did:uuid</code> method, specified
+separately and summarised in <a href="#did-uuid" class="auto internal xref">Section 6.5</a>. Archival Resource Keys
+(ARKs), Handle-based identifiers (<span>[<a href="#RFC3650" class="cite xref">RFC3650</a>]</span>), and Digital
+Object Identifiers (DOIs, layered on the Handle System) all
+depend on registration with an assignment authority — an ARK
+Name Assigning Authority Number, a Handle Service Provider, a
+DOI Registration Agency — and on dedicated resolution
+infrastructure (the ARK N2T resolver, the Global Handle Registry,
+<code>doi.org</code>).<a href="#section-1.1-1" class="pilcrow">¶</a></p>
+<p id="section-1.1-2">RUUIDs differ in two structural respects:<a href="#section-1.1-2" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-1.1-3.1">
+            <p id="section-1.1-3.1.1">They are 128-bit UUIDs in the conventional textual form
+(<span><a href="https://rfc-editor.org/rfc/rfc9562#section-4" class="relref">Section 4</a> of [<a href="#RFC9562" class="cite xref">RFC9562</a>]</span>), not URIs. Code that does not know
+this specification can still parse, store, and compare them as
+UUIDs.<a href="#section-1.1-3.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-1.1-3.2">
+            <p id="section-1.1-3.2.1">Resolution runs over the existing RIR / LIR / ISP allocation
+chain and the DNS reverse-zone delegation chain, with no
+dedicated registry or central resolver. The accountability
+gradient is the one that already governs IP address space.<a href="#section-1.1-3.2.1" class="pilcrow">¶</a></p>
+</li>
+        </ul>
+<p id="section-1.1-4">The other schemes carry features RUUIDs do not — URN namespace-
+level abstraction, DID Document semantics, ARK qualifiers, Handle
+type-record system, DOI metadata services. RUUID is targeted at
+the narrower case where a UUID parser already exists in the
+consuming system and adding a referent URL is the only thing
+missing.<a href="#section-1.1-4" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="applicability">
+<section id="section-1.2">
+        <h3 id="name-applicability">
+<a href="#section-1.2" class="section-number selfRef">1.2. </a><a href="#name-applicability" class="section-name selfRef">Applicability</a>
+        </h3>
+<p id="section-1.2-1">As an <em>identifier</em>, an RUUID unambiguously names its referent
+indefinitely, like any UUID. As a <em>resolvable</em> identifier, it
+can be walked through DNS to the referent's URI which can de-referenced;
+this role is bounded by continued control of the network prefix and its
+reverse-DNS delegation (see <a href="#prefix-transfer" class="auto internal xref">Section 9.2</a>).<a href="#section-1.2-1" class="pilcrow">¶</a></p>
+<p id="section-1.2-2">Workflows requiring coordination-free generation of structured
+(sortable, time-ordered) identifiers <span class="bcp14">SHOULD</span> prefer UUID version 7
+(<span>[<a href="#RFC9562" class="cite xref">RFC9562</a>]</span>); see <a href="#collision-tradeoffs" class="auto internal xref">Section 7.4</a>.<a href="#section-1.2-2" class="pilcrow">¶</a></p>
+</section>
+</div>
+</section>
+</div>
+<div id="conventions-and-terminology">
+<section id="section-2">
+      <h2 id="name-conventions-and-terminology">
+<a href="#section-2" class="section-number selfRef">2. </a><a href="#name-conventions-and-terminology" class="section-name selfRef">Conventions and Terminology</a>
+      </h2>
+<p id="section-2-1">The key words "<span class="bcp14">MUST</span>", "<span class="bcp14">MUST NOT</span>", "<span class="bcp14">REQUIRED</span>", "<span class="bcp14">SHALL</span>", "<span class="bcp14">SHALL NOT</span>", "<span class="bcp14">SHOULD</span>", "<span class="bcp14">SHOULD NOT</span>", "<span class="bcp14">RECOMMENDED</span>", "<span class="bcp14">NOT RECOMMENDED</span>",
+"<span class="bcp14">MAY</span>", and "<span class="bcp14">OPTIONAL</span>" in this document are to be interpreted as
+described in BCP 14 <span>[<a href="#RFC2119" class="cite xref">RFC2119</a>]</span> <span>[<a href="#RFC8174" class="cite xref">RFC8174</a>]</span> when, and only when, they
+appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶</a></p>
+<p id="section-2-2">The following terms are used in this document:<a href="#section-2-2" class="pilcrow">¶</a></p>
+<span class="break"></span><dl class="dlParallel" id="section-2-3">
+        <dt id="section-2-3.1">RUUID</dt>
+        <dd style="margin-left: 1.5em" id="section-2-3.2">
+          <p id="section-2-3.2.1">A 128-bit identifier conforming to this specification.<a href="#section-2-3.2.1" class="pilcrow">¶</a></p>
+</dd>
+        <dd class="break"></dd>
+<dt id="section-2-3.3">Network prefix</dt>
+        <dd style="margin-left: 1.5em" id="section-2-3.4">
+          <p id="section-2-3.4.1">The 64-bit field of an RUUID that carries an IPv6 /64 network
+prefix. An IPv4 /32 is encoded as the corresponding 6to4 prefix
+(<span>[<a href="#RFC3056" class="cite xref">RFC3056</a>]</span>); see <a href="#network-field" class="auto internal xref">Section 3.2</a>.<a href="#section-2-3.4.1" class="pilcrow">¶</a></p>
+</dd>
+        <dd class="break"></dd>
+<dt id="section-2-3.5">Identifier</dt>
+        <dd style="margin-left: 1.5em" id="section-2-3.6">
+          <p id="section-2-3.6.1">The 48-bit field of the RUUID that names the referent within the
+network prefix. See <a href="#format" class="auto internal xref">Section 3</a>.<a href="#section-2-3.6.1" class="pilcrow">¶</a></p>
+</dd>
+        <dd class="break"></dd>
+<dt id="section-2-3.7">UUID document</dt>
+        <dd style="margin-left: 1.5em" id="section-2-3.8">
+          <p id="section-2-3.8.1">A JSON document, identified by a URI published in DNS at
+<code>_uuid.&lt;domain&gt;</code>, that describes how RUUIDs under a network prefix
+are generated, and optionally publishes cryptographic material for
+verifying them. The format is defined in <a href="#uuid-document" class="auto internal xref">Section 6</a>.<a href="#section-2-3.8.1" class="pilcrow">¶</a></p>
+</dd>
+      <dd class="break"></dd>
+</dl>
+</section>
+</div>
+<div id="format">
+<section id="section-3">
+      <h2 id="name-ruuid-format">
+<a href="#section-3" class="section-number selfRef">3. </a><a href="#name-ruuid-format" class="section-name selfRef">RUUID Format</a>
+      </h2>
+<div id="bit-layout">
+<section id="section-3.1">
+        <h3 id="name-bit-layout">
+<a href="#section-3.1" class="section-number selfRef">3.1. </a><a href="#name-bit-layout" class="section-name selfRef">Bit layout</a>
+        </h3>
+<p id="section-3.1-1">Treating the RUUID as a 128-bit big-endian unsigned integer with bit 127
+being the most significant bit:<a href="#section-3.1-1" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="section-3.1-2">
+<pre>
+ 0                   1                   2                   3
+ 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                                                               |
+|         identifier (48)       +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                               |  ver  |     network_hi        |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|var|       type        |                                       |
++-+-+-+-+-+-+-+-+-+-+-+-+              network_lo               |
+|                                                               |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+</pre><a href="#section-3.1-2" class="pilcrow">¶</a>
+</div>
+<table class="center" id="table-1">
+          <caption><a href="#table-1" class="selfRef">Table 1</a></caption>
+<thead>
+            <tr>
+              <th class="text-left" rowspan="1" colspan="1">field</th>
+              <th class="text-right" rowspan="1" colspan="1">width</th>
+              <th class="text-left" rowspan="1" colspan="1">meaning</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">identifier</td>
+              <td class="text-right" rowspan="1" colspan="1">48</td>
+              <td class="text-left" rowspan="1" colspan="1">identifier of the referent within <code>(network, type)</code>
+</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">version</td>
+              <td class="text-right" rowspan="1" colspan="1">4</td>
+              <td class="text-left" rowspan="1" colspan="1">UUID version, set to 8</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">network_hi</td>
+              <td class="text-right" rowspan="1" colspan="1">12</td>
+              <td class="text-left" rowspan="1" colspan="1">high 12 bits of the 64-bit network prefix</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">variant</td>
+              <td class="text-right" rowspan="1" colspan="1">2</td>
+              <td class="text-left" rowspan="1" colspan="1">UUID variant, set to binary 10</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">type</td>
+              <td class="text-right" rowspan="1" colspan="1">10</td>
+              <td class="text-left" rowspan="1" colspan="1">identifier of a type entry in the UUID document</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">network_lo</td>
+              <td class="text-right" rowspan="1" colspan="1">52</td>
+              <td class="text-left" rowspan="1" colspan="1">low 52 bits of the network prefix</td>
+            </tr>
+          </tbody>
+        </table>
+</section>
+</div>
+<div id="network-field">
+<section id="section-3.2">
+        <h3 id="name-the-network-prefix">
+<a href="#section-3.2" class="section-number selfRef">3.2. </a><a href="#name-the-network-prefix" class="section-name selfRef">The network prefix</a>
+        </h3>
+<p id="section-3.2-1">The 64-bit <em>network prefix</em> is the concatenation of <code>network_hi</code>
+and <code>network_lo</code>, treated as a single 64-bit big-endian unsigned
+integer. It is an IPv6 /64 network prefix. An IPv4 /32
+is encoded as the corresponding IPv6 6to4 prefix (<span>[<a href="#RFC3056" class="cite xref">RFC3056</a>]</span>), zero-padded
+on the right; so a single 64-bit field carries either address family; the encoding
+distinguishes them.<a href="#section-3.2-1" class="pilcrow">¶</a></p>
+<p id="section-3.2-2">Note that while <span>[<a href="#RFC3056" class="cite xref">RFC3056</a>]</span> <span>[<a href="#RFC7526" class="cite xref">RFC7526</a>]</span> deprecated the companion
+anycast-relay prefix, the 6to4 IPv6 prefix is still allocated, and no
+native IPv6 addresses are assigned from it.  Each /64 within
+<code>2002::/16</code> corresponds to a specific IPv4 /32 under the 6to4
+derivation, and only that IPv4 owner controls the corresponding
+<code>in-addr.arpa</code> zone. A network field beginning with <code>0x2002</code> <span class="bcp14">MUST</span> be
+interpreted as IPv4-encoded; an RUUID with a network field in
+<code>2002::/16</code> <span class="bcp14">MUST</span> encode an IPv4 /32 whose <code>in-addr.arpa</code> reverse zone
+is controlled by the RUUID's resolver.<a href="#section-3.2-2" class="pilcrow">¶</a></p>
+<p id="section-3.2-3">The network prefix is an administrative identifier, not the IP
+address of any specific service; any number of servers <span class="bcp14">MAY</span> share a
+single network prefix (see <a href="#network-semantics" class="auto internal xref">Section 7.1</a>).<a href="#section-3.2-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="version-and-variant">
+<section id="section-3.3">
+        <h3 id="name-version-and-variant">
+<a href="#section-3.3" class="section-number selfRef">3.3. </a><a href="#name-version-and-variant" class="section-name selfRef">Version and variant</a>
+        </h3>
+<p id="section-3.3-1">The <code>version</code> field <span class="bcp14">MUST</span> be 8 (RFC 9562 "experimental"); the
+UUID <code>variant</code> field <span class="bcp14">MUST</span> be binary 10.<a href="#section-3.3-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="type">
+<section id="section-3.4">
+        <h3 id="name-type">
+<a href="#section-3.4" class="section-number selfRef">3.4. </a><a href="#name-type" class="section-name selfRef">Type</a>
+        </h3>
+<p id="section-3.4-1">The 10-bit <code>type</code> field identifies a type entry in the UUID
+document (<a href="#uuid-document" class="auto internal xref">Section 6</a>). The 1024 type values each describe one
+kind of referent and can carry their own referent-URI template. Type
+entries appear in the UUID document as CID <code>service</code> entries with
+<code>id</code> = <code>#&lt;type&gt;</code> (see <a href="#document-shape" class="auto internal xref">Section 6.2</a>). Type 0 is reserved for
+"unspecified".<a href="#section-3.4-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+</section>
+</div>
+<div id="resolution">
+<section id="section-4">
+      <h2 id="name-resolution">
+<a href="#section-4" class="section-number selfRef">4. </a><a href="#name-resolution" class="section-name selfRef">Resolution</a>
+      </h2>
+<div id="overview">
+<section id="section-4.1">
+        <h3 id="name-overview">
+<a href="#section-4.1" class="section-number selfRef">4.1. </a><a href="#name-overview" class="section-name selfRef">Overview</a>
+        </h3>
+<p id="section-4.1-1">RUUID resolution is two-phase. <strong>Phase 1</strong> resolves the network field
+to a UUID document (<a href="#uuid-document" class="auto internal xref">Section 6</a>). <strong>Phase 2</strong> applies the
+document's per-type service template to the 48-bit identifier to
+produce the referent URI. The spec's normative output is the
+referent URI.<a href="#section-4.1-1" class="pilcrow">¶</a></p>
+<p id="section-4.1-2">A resolver executes:<a href="#section-4.1-2" class="pilcrow">¶</a></p>
+<p id="section-4.1-3">A. <strong>(Phase 1)</strong><a href="#section-4.1-3" class="pilcrow">¶</a></p>
+<ol start="1" type="1" class="normal type-1" id="section-4.1-4">
+<li id="section-4.1-4.1">
+            <p id="section-4.1-4.1.1">Determine address family. If the top 16 bits of the
+network field equal <code>0x2002</code>, the next 32 bits are the IPv4 /32
+(reverse zone <code>in-addr.arpa</code>); otherwise the full 64 bits are an
+IPv6 /64 network prefix (reverse zone <code>ip6.arpa</code>).<a href="#section-4.1-4.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li id="section-4.1-4.2">
+            <p id="section-4.1-4.2.1"><strong>(Phase 1)</strong> Consult a <em>registry endpoint</em> (<a href="#registry-endpoints" class="auto internal xref">Section 4.2</a>)
+for the domain and UUID-document URI associated with the network
+prefix. This is the only step that <span class="bcp14">MUST</span> succeed; later steps have
+documented defaults.<a href="#section-4.1-4.2.1" class="pilcrow">¶</a></p>
+</li>
+          <li id="section-4.1-4.3">
+            <p id="section-4.1-4.3.1"><strong>(Phase 1)</strong> Fetch the UUID document (<a href="#uuid-document" class="auto internal xref">Section 6</a>). On
+fetch failure or non-JSON body, proceed with no document.<a href="#section-4.1-4.3.1" class="pilcrow">¶</a></p>
+</li>
+        </ol>
+<p id="section-4.1-5">B. <strong>(Phase 2)</strong><a href="#section-4.1-5" class="pilcrow">¶</a></p>
+<ol start="1" type="1" class="normal type-1" id="section-4.1-6">
+<li id="section-4.1-6.1">
+            <p id="section-4.1-6.1.1">Construct the referent URI: pick the service entry
+from the UUID Document which corresponds to the
+RUUID's type (or fall back per
+<a href="#template-substitution" class="auto internal xref">Section 4.6</a>) and apply placeholder substitution.<a href="#section-4.1-6.1.1" class="pilcrow">¶</a></p>
+</li>
+        </ol>
+<p id="section-4.1-7">Per-identifier metadata lives in the UUID document, not the
+registry, so registry state per domain is constant regardless of
+how many RUUIDs are generated under that domain.<a href="#section-4.1-7" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="registry-endpoints">
+<section id="section-4.2">
+        <h3 id="name-registry-endpoints">
+<a href="#section-4.2" class="section-number selfRef">4.2. </a><a href="#name-registry-endpoints" class="section-name selfRef">Registry endpoints</a>
+        </h3>
+<p id="section-4.2-1">A registry endpoint returns the domain and UUID-document URI for a
+given network prefix. Two endpoint types are defined:<a href="#section-4.2-1" class="pilcrow">¶</a></p>
+<p id="section-4.2-2"><strong>DNS-protocol endpoint.</strong> The resolver does a <code>PTR</code> query against
+the reverse-DNS name (<a href="#resolve-reverse-name" class="auto internal xref">Section 4.3</a>) for the domain, then
+a <code>URI</code> query at <code>_uuid.&lt;domain&gt;</code> (falling back to <code>TXT</code>;
+<a href="#doc-uri-resolution" class="auto internal xref">Section 4.4</a>) for the document URI. The system DNS
+resolver is the default; any DNS-protocol-speaking service with
+these semantics is conformant. The DNS resolver may be either the
+traditional UDP port 53 or a DNS over HTTPS (DoH) service, as defined
+by <span>[<a href="#RFC8484" class="cite xref">RFC8484</a>]</span>.<a href="#section-4.2-2" class="pilcrow">¶</a></p>
+<p id="section-4.2-3"><strong>HTTP API endpoint</strong> (<a href="#registry-http" class="auto internal xref">Section 4.5</a>). Returns the
+<code>(domain, uuid_document_uri)</code> pair as JSON in one round trip;
+deployable on a static-file host.<a href="#section-4.2-3" class="pilcrow">¶</a></p>
+<p id="section-4.2-4">The DNS-protocol endpoint is the universal default: every public
+IP prefix has a reverse-DNS chain. An HTTP API endpoint requires
+pre-configuration; a resolver without out-of-band context <span class="bcp14">MUST</span> use
+the DNS-protocol endpoint. When a consumer consults both endpoints,
+their responses for the same network prefix <span class="bcp14">MUST</span> agree; a
+disagreement <span class="bcp14">SHOULD</span> be treated as compromise of one or both.<a href="#section-4.2-4" class="pilcrow">¶</a></p>
+<div id="registry-endpoints-config">
+<section id="section-4.2.1">
+          <h4 id="name-endpoint-configuration">
+<a href="#section-4.2.1" class="section-number selfRef">4.2.1. </a><a href="#name-endpoint-configuration" class="section-name selfRef">Endpoint configuration</a>
+          </h4>
+<p id="section-4.2.1-1">A registry endpoint is configured by URL; the scheme determines the
+type. A DNS-protocol endpoint uses <code>dns://&lt;host&gt;[:&lt;port&gt;]</code>
+(<span>[<a href="#RFC4501" class="cite xref">RFC4501</a>]</span>; port defaults to 53). A DoH-reachable DNS-protocol
+endpoint uses an <code>https://</code> URL (<span>[<a href="#RFC8484" class="cite xref">RFC8484</a>]</span>), distinguished from the
+HTTP API endpoint by <code>Accept</code> (<code>application/dns-message</code>
+vs. <code>application/json</code>). An HTTP API endpoint uses
+<code>https://&lt;authority&gt;[/&lt;path&gt;]</code>; the resolver appends the lookup key
+from <a href="#registry-http" class="auto internal xref">Section 4.5</a>.<a href="#section-4.2.1-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+</section>
+</div>
+<div id="resolve-reverse-name">
+<section id="section-4.3">
+        <h3 id="name-reverse-dns-name-constructi">
+<a href="#section-4.3" class="section-number selfRef">4.3. </a><a href="#name-reverse-dns-name-constructi" class="section-name selfRef">Reverse-DNS name construction</a>
+        </h3>
+<p id="section-4.3-1">For IPv4-encoded RUUIDs (top 16 bits = <code>0x2002</code>), recover the
+IPv4 /32 as <code>(network &gt;&gt; 16) &amp; 0xFFFFFFFF</code> and construct the
+reverse-DNS name per <span><a href="https://rfc-editor.org/rfc/rfc1035#section-3.5" class="relref">Section 3.5</a> of [<a href="#RFC1035" class="cite xref">RFC1035</a>]</span>: the four address
+bytes in reverse order as decimal labels, followed by <code>in-addr.arpa</code>.<a href="#section-4.3-1" class="pilcrow">¶</a></p>
+<p id="section-4.3-2">For IPv6-encoded RUUIDs, the reverse-DNS name is the standard
+<code>ip6.arpa</code> name (<span><a href="https://rfc-editor.org/rfc/rfc1035#section-2.5" class="relref">Section 2.5</a> of [<a href="#RFC1035" class="cite xref">RFC1035</a>]</span>) truncated to the first
+16 nibbles (the /64 boundary).<a href="#section-4.3-2" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="doc-uri-resolution">
+<section id="section-4.4">
+        <h3 id="name-uuid-document-resolution">
+<a href="#section-4.4" class="section-number selfRef">4.4. </a><a href="#name-uuid-document-resolution" class="section-name selfRef">UUID document resolution</a>
+        </h3>
+<p id="section-4.4-1">At <code>_uuid.&lt;domain&gt;</code> the resolver issues a <code>URI</code> query first
+(<span>[<a href="#RFC7553" class="cite xref">RFC7553</a>]</span>), then a <code>TXT</code> query (<a href="#txt-format" class="auto internal xref">Section 5</a>) if no usable URI
+record is returned. With multiple URI records, pick the lowest
+<code>priority</code>, breaking ties by highest <code>weight</code>. TXT records without
+the RUUID prefix <span class="bcp14">MUST</span> be ignored.<a href="#section-4.4-1" class="pilcrow">¶</a></p>
+<p id="section-4.4-2">Type-specific queries are used rather than <code>ANY</code> because
+<span>[<a href="#RFC8482" class="cite xref">RFC8482</a>]</span> permits recursive resolvers to return minimal answers
+to <code>ANY</code> meta-queries, silently losing published records.<a href="#section-4.4-2" class="pilcrow">¶</a></p>
+<div id="default-doc-uri">
+<section id="section-4.4.1">
+          <h4 id="name-default-document-uri">
+<a href="#section-4.4.1" class="section-number selfRef">4.4.1. </a><a href="#name-default-document-uri" class="section-name selfRef">Default document URI</a>
+          </h4>
+<p id="section-4.4.1-1">If no usable record is present at <code>_uuid.&lt;domain&gt;</code>, the
+UUID-document URI defaults to
+<code>https://&lt;domain&gt;/.well-known/uuid-document.json</code> (well-known
+suffix per <span>[<a href="#RFC8615" class="cite xref">RFC8615</a>]</span>, registered in <a href="#iana" class="auto internal xref">Section 8</a>). On a fetch failure
+of the default URI, the resolver applies the default referent
+template (<a href="#default-template" class="auto internal xref">Section 4.6.2</a>). A UUID document hosted elsewhere is
+located by publishing a URI or TXT record at <code>_uuid.&lt;domain&gt;</code>.<a href="#section-4.4.1-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+</section>
+</div>
+<div id="registry-http">
+<section id="section-4.5">
+        <h3 id="name-registry-http-api-endpoint">
+<a href="#section-4.5" class="section-number selfRef">4.5. </a><a href="#name-registry-http-api-endpoint" class="section-name selfRef">Registry HTTP API endpoint</a>
+        </h3>
+<p id="section-4.5-1">An HTTP API registry endpoint returns the domain and UUID-document
+URI in one HTTPS round trip. The endpoint <span class="bcp14">MUST</span>
+recognise both URL forms:<a href="#section-4.5-1" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="section-4.5-2">
+<pre>
+GET &lt;registry-url&gt;/&lt;reverse-dns-name&gt;
+GET &lt;registry-url&gt;/&lt;address&gt;.uuid
+</pre><a href="#section-4.5-2" class="pilcrow">¶</a>
+</div>
+<p id="section-4.5-3"><code>&lt;reverse-dns-name&gt;</code> is the name the DNS-protocol endpoint uses
+(<a href="#resolve-reverse-name" class="auto internal xref">Section 4.3</a>, no trailing dot). <code>&lt;address&gt;</code> is dotted-
+quad IPv4 (for 6to4-encoded IPv4 /32s) or textual IPv6 (for IPv6
+/64 network prefixes); the <code>.uuid</code> suffix avoids collision with
+application paths at the same host. Both forms return byte-identical
+responses.<a href="#section-4.5-3" class="pilcrow">¶</a></p>
+<p id="section-4.5-4">The 200 response <span class="bcp14">MUST</span> be <code>application/json</code> (<span>[<a href="#RFC8259" class="cite xref">RFC8259</a>]</span>) with at
+least:<a href="#section-4.5-4" class="pilcrow">¶</a></p>
+<table class="center" id="table-2">
+          <caption><a href="#table-2" class="selfRef">Table 2</a></caption>
+<thead>
+            <tr>
+              <th class="text-left" rowspan="1" colspan="1">name</th>
+              <th class="text-left" rowspan="1" colspan="1">type</th>
+              <th class="text-left" rowspan="1" colspan="1">meaning</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>reverse_dns_name</code>
+</td>
+              <td class="text-left" rowspan="1" colspan="1">string</td>
+              <td class="text-left" rowspan="1" colspan="1">the reverse-DNS name from the URL, echoed</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>domain</code>
+</td>
+              <td class="text-left" rowspan="1" colspan="1">string</td>
+              <td class="text-left" rowspan="1" colspan="1">the domain</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>uuid_document_uri</code>
+</td>
+              <td class="text-left" rowspan="1" colspan="1">string</td>
+              <td class="text-left" rowspan="1" colspan="1">the URI of the UUID document</td>
+            </tr>
+          </tbody>
+        </table>
+<p id="section-4.5-6">Resolvers <span class="bcp14">MUST</span> ignore unknown members. A 404 means "no binding"
+(treat like NXDOMAIN at the PTR step). The mapping is long-lived
+per network prefix; registries <span class="bcp14">SHOULD</span> set a generous
+<code>Cache-Control: max-age</code> (standard HTTP caching, <span>[<a href="#RFC9111" class="cite xref">RFC9111</a>]</span>,
+applies). The endpoint can be served as static files. The resolver
+<span class="bcp14">MUST</span> verify the endpoint's TLS identity per <span>[<a href="#RFC9525" class="cite xref">RFC9525</a>]</span>.<a href="#section-4.5-6" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="template-substitution">
+<section id="section-4.6">
+        <h3 id="name-referent-uri-construction">
+<a href="#section-4.6" class="section-number selfRef">4.6. </a><a href="#name-referent-uri-construction" class="section-name selfRef">Referent URI construction</a>
+        </h3>
+<p id="section-4.6-1">The referent URI is constructed by selecting a template and applying
+placeholder substitution.<a href="#section-4.6-1" class="pilcrow">¶</a></p>
+<div id="template-selection">
+<section id="section-4.6.1">
+          <h4 id="name-template-selection">
+<a href="#section-4.6.1" class="section-number selfRef">4.6.1. </a><a href="#name-template-selection" class="section-name selfRef">Template selection</a>
+          </h4>
+<p id="section-4.6.1-1">The resolver picks a template by checking, in order:<a href="#section-4.6.1-1" class="pilcrow">¶</a></p>
+<ol start="1" type="1" class="normal type-1" id="section-4.6.1-2">
+<li id="section-4.6.1-2.1">
+              <p id="section-4.6.1-2.1.1">A <code>service</code> entry with <code>id</code> = <code>#&lt;type&gt;</code> and a string
+<code>serviceEndpoint</code> (the type-specific template).<a href="#section-4.6.1-2.1.1" class="pilcrow">¶</a></p>
+</li>
+            <li id="section-4.6.1-2.2">
+              <p id="section-4.6.1-2.2.1">A <code>service</code> entry with <code>id</code> = <code>#0</code> and a string
+<code>serviceEndpoint</code> (the domain-wide default).<a href="#section-4.6.1-2.2.1" class="pilcrow">¶</a></p>
+</li>
+            <li id="section-4.6.1-2.3">
+              <p id="section-4.6.1-2.3.1">The spec-wide default template defined below.<a href="#section-4.6.1-2.3.1" class="pilcrow">¶</a></p>
+</li>
+          </ol>
+</section>
+</div>
+<div id="default-template">
+<section id="section-4.6.2">
+          <h4 id="name-default-template">
+<a href="#section-4.6.2" class="section-number selfRef">4.6.2. </a><a href="#name-default-template" class="section-name selfRef">Default template</a>
+          </h4>
+<p id="section-4.6.2-1">When no document template applies, the default is:<a href="#section-4.6.2-1" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="section-4.6.2-2">
+<pre>
+https://&lt;domain&gt;/&lt;type&gt;/&lt;identifier&gt;
+</pre><a href="#section-4.6.2-2" class="pilcrow">¶</a>
+</div>
+<p id="section-4.6.2-3">The default applies when the <code>service</code> array is absent, has neither
+a <code>#&lt;type&gt;</code> nor <code>#0</code> entry, or has only entries without
+<code>serviceEndpoint</code>; it also applies when the document cannot be
+fetched at all (so reverse-DNS success alone always yields a
+resolvable URL). When URLs already follow this convention, no
+UUID document need be published.<a href="#section-4.6.2-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="placeholders">
+<section id="section-4.6.3">
+          <h4 id="name-placeholder-substitution">
+<a href="#section-4.6.3" class="section-number selfRef">4.6.3. </a><a href="#name-placeholder-substitution" class="section-name selfRef">Placeholder substitution</a>
+          </h4>
+<p id="section-4.6.3-1">The resolver replaces every occurrence of the following substrings:<a href="#section-4.6.3-1" class="pilcrow">¶</a></p>
+<table class="center" id="table-3">
+            <caption><a href="#table-3" class="selfRef">Table 3</a></caption>
+<thead>
+              <tr>
+                <th class="text-left" rowspan="1" colspan="1">placeholder</th>
+                <th class="text-left" rowspan="1" colspan="1">substituted with</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="text-left" rowspan="1" colspan="1">
+                  <code>&lt;identifier&gt;</code>
+</td>
+                <td class="text-left" rowspan="1" colspan="1">when <code>&lt;day&gt;</code> is absent from the template, the full 48-bit identifier as 12 lowercase hex digits, zero-padded; when <code>&lt;day&gt;</code> is present, the low 28 bits (the <code>sequence</code> of <a href="#identifier-construction" class="auto internal xref">Section 7.3</a>) as 7 lowercase hex digits, zero-padded</td>
+              </tr>
+              <tr>
+                <td class="text-left" rowspan="1" colspan="1">
+                  <code>&lt;day&gt;</code>
+</td>
+                <td class="text-left" rowspan="1" colspan="1">the high 20 bits of the identifier (the <code>day_count</code> of <a href="#identifier-construction" class="auto internal xref">Section 7.3</a>), rendered as the corresponding calendar date <code>YYYY-MM-DD</code> (<code>2025-01-01 + day_count days</code>, UTC)</td>
+              </tr>
+              <tr>
+                <td class="text-left" rowspan="1" colspan="1">
+                  <code>&lt;type&gt;</code>
+</td>
+                <td class="text-left" rowspan="1" colspan="1">the RUUID's <code>type</code> as a decimal integer, no padding</td>
+              </tr>
+              <tr>
+                <td class="text-left" rowspan="1" colspan="1">
+                  <code>&lt;network&gt;</code>
+</td>
+                <td class="text-left" rowspan="1" colspan="1">the network field as 16 lowercase hex digits, zero-padded</td>
+              </tr>
+              <tr>
+                <td class="text-left" rowspan="1" colspan="1">
+                  <code>&lt;uuid&gt;</code>
+</td>
+                <td class="text-left" rowspan="1" colspan="1">the full RUUID in canonical 8-4-4-4-12 lowercase form</td>
+              </tr>
+              <tr>
+                <td class="text-left" rowspan="1" colspan="1">
+                  <code>&lt;domain&gt;</code>
+</td>
+                <td class="text-left" rowspan="1" colspan="1">the domain returned by the PTR lookup</td>
+              </tr>
+            </tbody>
+          </table>
+<p id="section-4.6.3-3">Substituted values are not URI-encoded; all are URL-safe by
+construction.<a href="#section-4.6.3-3" class="pilcrow">¶</a></p>
+<p id="section-4.6.3-4">A template containing <code>&lt;day&gt;</code> is an assertion by the document
+publisher that identifiers under this entry are constructed per
+<a href="#identifier-construction" class="auto internal xref">Section 7.3</a>. The resolver does not check this and
+performs the substitution as defined regardless of the underlying
+bits; a <code>&lt;day&gt;</code> value implausible for §7.3 (e.g., a date far in
+the future) is the publisher's misconfiguration, not the
+resolver's concern.<a href="#section-4.6.3-4" class="pilcrow">¶</a></p>
+<p id="section-4.6.3-5">The result <span class="bcp14">MUST</span> be a valid URI reference per <span><a href="https://rfc-editor.org/rfc/rfc3986#section-4" class="relref">Section 4</a> of [<a href="#RFC3986" class="cite xref">RFC3986</a>]</span>. A relative reference is resolved against the UUID
+document's fetch URI per <span><a href="https://rfc-editor.org/rfc/rfc3986#section-5" class="relref">Section 5</a> of [<a href="#RFC3986" class="cite xref">RFC3986</a>]</span>. UUID documents
+<span class="bcp14">SHOULD</span> use <strong>absolute-path references</strong> (a path beginning with <code>/</code>, no
+scheme, no authority) so the document can be moved between hosts
+without editing service entries: <code>/</code>-rooted references transplant the
+document's scheme and authority unchanged.<a href="#section-4.6.3-5" class="pilcrow">¶</a></p>
+</section>
+</div>
+</section>
+</div>
+</section>
+</div>
+<div id="txt-format">
+<section id="section-5">
+      <h2 id="name-txt-record-format">
+<a href="#section-5" class="section-number selfRef">5. </a><a href="#name-txt-record-format" class="section-name selfRef">TXT Record Format</a>
+      </h2>
+<p id="section-5-1">When the <code>_uuid.&lt;domain&gt;</code> query returns no URI records but does
+return TXT, the resolver picks a TXT record whose concatenated
+strings (<span><a href="https://rfc-editor.org/rfc/rfc1035#section-3.3.14" class="relref">Section 3.3.14</a> of [<a href="#RFC1035" class="cite xref">RFC1035</a>]</span>) match:<a href="#section-5-1" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="section-5-2">
+<pre>
+v=ruuid1 &lt;URI&gt;
+</pre><a href="#section-5-2" class="pilcrow">¶</a>
+</div>
+<p id="section-5-3"><code>&lt;URI&gt;</code> <span class="bcp14">MUST</span> be a valid URI per <span><a href="https://rfc-editor.org/rfc/rfc3986#section-3" class="relref">Section 3</a> of [<a href="#RFC3986" class="cite xref">RFC3986</a>]</span>.<a href="#section-5-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="uuid-document">
+<section id="section-6">
+      <h2 id="name-uuid-document">
+<a href="#section-6" class="section-number selfRef">6. </a><a href="#name-uuid-document" class="section-name selfRef">UUID Document</a>
+      </h2>
+<p id="section-6-1">The UUID document is the JSON document fetched at step 3 of
+<a href="#resolution" class="auto internal xref">Section 4</a>. It is a W3C Controlled Identifiers (CID) document
+(<span>[<a href="#W3C-CID" class="cite xref">W3C-CID</a>]</span>) whose <code>service</code> array carries per-type referent-URI
+templates. Resolvers <span class="bcp14">MUST</span> ignore fields they do not recognise, and
+<span class="bcp14">SHOULD</span> treat the document as authoritative only for the domain
+whose DNS pointed them at it.<a href="#section-6-1" class="pilcrow">¶</a></p>
+<div id="document-fetch">
+<section id="section-6.1">
+        <h3 id="name-document-fetch">
+<a href="#section-6.1" class="section-number selfRef">6.1. </a><a href="#name-document-fetch" class="section-name selfRef">Document fetch</a>
+        </h3>
+<p id="section-6.1-1">The UUID document is identified by the URI established at step 3 of
+<a href="#resolution" class="auto internal xref">Section 4</a> — either an explicitly-published URI from
+<code>_uuid.&lt;domain&gt;</code> or the default (<a href="#default-doc-uri" class="auto internal xref">Section 4.4.1</a>). The URI <span class="bcp14">MAY</span>
+use any scheme the resolver can dereference to a fetchable JSON
+document: <code>https:</code> (the expected baseline), <code>http:</code>, <code>data:</code> (inline
+JSON), <code>file:</code>, or <code>did:</code> (where the DID resolves to a document that
+<em>is</em> the UUID document; <code>did:web:</code>, <code>did:plc:</code>, and <code>did:uuid:</code> are
+all usable). UUID documents <span class="bcp14">SHOULD</span> use <code>https:</code> for TLS transport
+integrity.<a href="#section-6.1-1" class="pilcrow">¶</a></p>
+<p id="section-6.1-2">The document <span class="bcp14">MUST</span> be UTF-8 JSON (<span>[<a href="#RFC8259" class="cite xref">RFC8259</a>]</span>) with an object at
+top level.<a href="#section-6.1-2" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="document-shape">
+<section id="section-6.2">
+        <h3 id="name-document-structure-and-evol">
+<a href="#section-6.2" class="section-number selfRef">6.2. </a><a href="#name-document-structure-and-evol" class="section-name selfRef">Document structure and evolution</a>
+        </h3>
+<p id="section-6.2-1">A conforming UUID document is a JSON object structured as a W3C
+Controlled Identifiers (CID) document <span>[<a href="#W3C-CID" class="cite xref">W3C-CID</a>]</span>. It is the CID
+document for the network prefix's controller: one document, keyed
+by the network prefix, covers every full RUUID under that network
+prefix.<a href="#section-6.2-1" class="pilcrow">¶</a></p>
+<p id="section-6.2-2">The UUID document's <code>id</code> is the URI used to dereference it (CID
+§canonical-URL): the URI published at <code>_uuid.&lt;domain&gt;</code>, or the
+default-document URI (<a href="#default-doc-uri" class="auto internal xref">Section 4.4.1</a>) when no record is
+published. The URI <span class="bcp14">MAY</span> use any URL-Standard scheme.<a href="#section-6.2-2" class="pilcrow">¶</a></p>
+<p id="section-6.2-3">The fields used by the resolution pipeline are:<a href="#section-6.2-3" class="pilcrow">¶</a></p>
+<table class="center" id="table-4">
+          <caption><a href="#table-4" class="selfRef">Table 4</a></caption>
+<thead>
+            <tr>
+              <th class="text-left" rowspan="1" colspan="1">field</th>
+              <th class="text-left" rowspan="1" colspan="1">type</th>
+              <th class="text-left" rowspan="1" colspan="1">required by this spec</th>
+              <th class="text-left" rowspan="1" colspan="1">meaning</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>@context</code>
+</td>
+              <td class="text-left" rowspan="1" colspan="1">string or array</td>
+              <td class="text-left" rowspan="1" colspan="1">optional (recommended)</td>
+              <td class="text-left" rowspan="1" colspan="1">JSON-LD context. <span class="bcp14">SHOULD</span> include <code>"https://www.w3.org/ns/cid/v1"</code>.</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>id</code>
+</td>
+              <td class="text-left" rowspan="1" colspan="1">string</td>
+              <td class="text-left" rowspan="1" colspan="1">optional (recommended)</td>
+              <td class="text-left" rowspan="1" colspan="1">The URI at which the document was dereferenced.</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>controller</code>
+</td>
+              <td class="text-left" rowspan="1" colspan="1">string or array</td>
+              <td class="text-left" rowspan="1" colspan="1">optional</td>
+              <td class="text-left" rowspan="1" colspan="1">URI(s) of the entity authorised to update this document. When omitted, CID treats it as equal to <code>id</code>.</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>alsoKnownAs</code>
+</td>
+              <td class="text-left" rowspan="1" colspan="1">array of strings</td>
+              <td class="text-left" rowspan="1" colspan="1">optional</td>
+              <td class="text-left" rowspan="1" colspan="1">Additional URIs identifying the same subject.</td>
+            </tr>
+            <tr>
+              <td class="text-left" rowspan="1" colspan="1">
+                <code>service</code>
+</td>
+              <td class="text-left" rowspan="1" colspan="1">array of objects</td>
+              <td class="text-left" rowspan="1" colspan="1">required for type entries</td>
+              <td class="text-left" rowspan="1" colspan="1">Per-type referent templates; see <a href="#service-entries" class="auto internal xref">Section 6.4</a>.</td>
+            </tr>
+          </tbody>
+        </table>
+<p id="section-6.2-5">No top-level field is <span class="bcp14">REQUIRED</span>: the empty object <code>{}</code> is processable
+(it just makes no RUUIDs resolvable, other than those resolvable using
+the default template). The schema evolves by addition; resolvers <span class="bcp14">MUST</span>
+ignore unknown fields. A resolver that needs a field which is absent
+or unparseable <span class="bcp14">MUST</span> fail that operation rather than substitute
+defaults.<a href="#section-6.2-5" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="verification-fields">
+<section id="section-6.3">
+        <h3 id="name-verification-fields">
+<a href="#section-6.3" class="section-number selfRef">6.3. </a><a href="#name-verification-fields" class="section-name selfRef">Verification fields</a>
+        </h3>
+<p id="section-6.3-1">A UUID document <span class="bcp14">MAY</span> include <code>prefixes</code> (array of CIDR strings) and
+<code>domains</code> (array of domain strings) covered by the document.
+Consumers <span class="bcp14">SHOULD</span> verify the RUUID's network prefix against <code>prefixes</code> and
+the resolved domain against <code>domains</code> when present, treating a
+mismatch as misconfiguration (log; <span class="bcp14">MAY</span> refuse the referent URI).
+These fields are advisory, not security-critical: an adversary who
+controls the DNS path or the document can set them to any value.
+Their purpose is detecting honest mistakes (staging docs at prod
+URLs, shared infrastructure pointing at the wrong tenant, a prefix
+move without re-hosting the document).<a href="#section-6.3-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="service-entries">
+<section id="section-6.4">
+        <h3 id="name-service-entries-per-type-re">
+<a href="#section-6.4" class="section-number selfRef">6.4. </a><a href="#name-service-entries-per-type-re" class="section-name selfRef">Service entries (per-type referent templates)</a>
+        </h3>
+<p id="section-6.4-1">The document's <code>service</code> array carries one entry per RUUID type
+covered by the document. Entries follow the CID service-entry schema
+with one convention: the entry's <code>id</code> is the fragment URI <code>#&lt;type&gt;</code>
+(the decimal type value, <code>"0"</code> through <code>"1023"</code>), and
+<code>serviceEndpoint</code> is the referent-URI template the resolver
+substitutes (<a href="#template-substitution" class="auto internal xref">Section 4.6</a>).<a href="#section-6.4-1" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="section-6.4-2">
+<pre>
+{
+  "@context": "https://www.w3.org/ns/cid/v1",
+  "id": "https://example.com/.well-known/uuid-document.json",
+  "alsoKnownAs": ["did:uuid:00000000-0000-8200-8002-c000022a0000"],
+  "service": [
+    {
+      "id": "#1",
+      "type": "User",
+      "serviceEndpoint": "https://example.com/u/&lt;identifier&gt;"
+    },
+    {
+      "id": "#42",
+      "type": "CowTag",
+      "serviceEndpoint": "https://example.com/t/&lt;identifier&gt;"
+    }
+  ]
+}
+</pre><a href="#section-6.4-2" class="pilcrow">¶</a>
+</div>
+<p id="section-6.4-3">The array is sparse; missing entries fall back to the default
+template (<a href="#default-template" class="auto internal xref">Section 4.6.2</a>). Different types <span class="bcp14">MAY</span> use entirely
+different URI structures.<a href="#section-6.4-3" class="pilcrow">¶</a></p>
+<div id="type-entry-fields">
+<section id="section-6.4.1">
+          <h4 id="name-type-entry-fields">
+<a href="#section-6.4.1" class="section-number selfRef">6.4.1. </a><a href="#name-type-entry-fields" class="section-name selfRef">Type entry fields</a>
+          </h4>
+<table class="center" id="table-5">
+            <caption><a href="#table-5" class="selfRef">Table 5</a></caption>
+<thead>
+              <tr>
+                <th class="text-left" rowspan="1" colspan="1">field</th>
+                <th class="text-left" rowspan="1" colspan="1">meaning</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="text-left" rowspan="1" colspan="1">
+                  <code>id</code>
+</td>
+                <td class="text-left" rowspan="1" colspan="1">the fragment URI <code>#&lt;type&gt;</code> (e.g. <code>#1</code>, <code>#42</code>); the type value is the substring after <code>#</code>
+</td>
+              </tr>
+              <tr>
+                <td class="text-left" rowspan="1" colspan="1">
+                  <code>type</code>
+</td>
+                <td class="text-left" rowspan="1" colspan="1">human-readable label (<code>"User"</code>, <code>"CowTag"</code>); CID requires this field but this spec places no constraint on content</td>
+              </tr>
+              <tr>
+                <td class="text-left" rowspan="1" colspan="1">
+                  <code>serviceEndpoint</code>
+</td>
+                <td class="text-left" rowspan="1" colspan="1">URI template per <a href="#template-substitution" class="auto internal xref">Section 4.6</a>; the default template applies if absent</td>
+              </tr>
+            </tbody>
+          </table>
+<p id="section-6.4.1-2">Type entries <span class="bcp14">MAY</span> additionally carry <code>referent_kind</code> (structured
+metadata drawn from IANA registries, e.g. <code>service</code> from RFC 6335,
+<code>media_type</code> from RFC 6838, <code>urn_namespace</code> from RFC 8141) and a
+free-form <code>description</code>. All other fields are <span class="bcp14">OPTIONAL</span>. Consumers
+<span class="bcp14">MUST</span> ignore unknown fields. Service entries whose <code>id</code> does not
+match <code>#&lt;type&gt;</code> are not type entries and are ignored by the
+resolution pipeline.<a href="#section-6.4.1-2" class="pilcrow">¶</a></p>
+</section>
+</div>
+</section>
+</div>
+<div id="did-uuid">
+<section id="section-6.5">
+        <h3 id="name-the-diduuid-did-method">
+<a href="#section-6.5" class="section-number selfRef">6.5. </a><a href="#name-the-diduuid-did-method" class="section-name selfRef">The did:uuid DID method</a>
+        </h3>
+<p id="section-6.5-1">An RUUID is also a stable identifier for a W3C Decentralized
+Identifier (DID) document (<span>[<a href="#W3C-DID" class="cite xref">W3C-DID</a>]</span>). The <code>did:uuid</code> method:<a href="#section-6.5-1" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="section-6.5-2">
+<pre>
+did:uuid:&lt;canonical-RUUID&gt;
+</pre><a href="#section-6.5-2" class="pilcrow">¶</a>
+</div>
+<p id="section-6.5-3">A <code>did:uuid</code> resolver performs RUUID resolution per <a href="#resolution" class="auto internal xref">Section 4</a>
+to obtain the Phase 2 referent URI, then synthesises a per-RUUID DID
+document wrapping that URI as a service entry, with <code>controller</code>
+derived from the RUUID's network prefix. The synthesis transform
+sits <em>above</em> the RUUID resolution pipeline, not inside it: the RUUID
+spec's normative output is a URI, and the DID document is a
+method-specific wrapper of that URI. The full method spec is
+published separately.<a href="#section-6.5-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+</section>
+</div>
+<div id="generation-considerations">
+<section id="section-7">
+      <h2 id="name-generation-considerations">
+<a href="#section-7" class="section-number selfRef">7. </a><a href="#name-generation-considerations" class="section-name selfRef">Generation Considerations</a>
+      </h2>
+<div id="network-semantics">
+<section id="section-7.1">
+        <h3 id="name-network-prefix-semantics">
+<a href="#section-7.1" class="section-number selfRef">7.1. </a><a href="#name-network-prefix-semantics" class="section-name selfRef">Network prefix semantics</a>
+        </h3>
+<p id="section-7.1-1">The <code>network</code> field is an IPv6 /64 network prefix, or an IPv4 /32
+6to4-encoded into the same field. It is not the IP address of any
+specific service. The resolution algorithm requires only that the
+prefix's reverse-DNS zone resolve PTR queries to the domain that
+publishes the UUID document; the operator of that DNS zone need not
+coincide with the entity that generated the RUUID nor with the
+operator of the service providing the referent. Any number of servers,
+on unrelated addresses, <span class="bcp14">MAY</span> share a single network prefix.<a href="#section-7.1-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="uniqueness">
+<section id="section-7.2">
+        <h3 id="name-uniqueness">
+<a href="#section-7.2" class="section-number selfRef">7.2. </a><a href="#name-uniqueness" class="section-name selfRef">Uniqueness</a>
+        </h3>
+<p id="section-7.2-1">Identifiers <span class="bcp14">MUST</span> be unique within <code>(network, type)</code>. Global
+uniqueness of RUUIDs follows from this property and the global
+uniqueness of IP allocations. Once an identifier is assigned, the
+binding <span class="bcp14">MAY</span> be retired but the identifier value <span class="bcp14">MUST NOT</span> be reused
+for a different referent.<a href="#section-7.2-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="identifier-construction">
+<section id="section-7.3">
+        <h3 id="name-identifier-construction">
+<a href="#section-7.3" class="section-number selfRef">7.3. </a><a href="#name-identifier-construction" class="section-name selfRef">Identifier construction</a>
+        </h3>
+<p id="section-7.3-1">For an RUUID used only within the generator's local scope, the
+48-bit identifier <span class="bcp14">MAY</span> be any value satisfying <a href="#uniqueness" class="auto internal xref">Section 7.2</a>.<a href="#section-7.3-1" class="pilcrow">¶</a></p>
+<p id="section-7.3-2">For an RUUID used outside the generator's local scope, where
+persistent universal uniqueness is required without ongoing
+coordination among independent generators, the identifier <span class="bcp14">SHOULD</span>
+be constructed as:<a href="#section-7.3-2" class="pilcrow">¶</a></p>
+<div class="alignLeft art-text artwork" id="section-7.3-3">
+<pre>
+identifier = (day_count &lt;&lt; 28) | sequence
+</pre><a href="#section-7.3-3" class="pilcrow">¶</a>
+</div>
+<ul class="normal">
+<li class="normal" id="section-7.3-4.1">
+            <p id="section-7.3-4.1.1"><code>day_count</code> is a 20-bit unsigned count of days since 2025-01-01
+00:00:00 UTC. The value <span class="bcp14">MUST</span> be a day on which the generator
+held reverse-DNS authority over the network prefix, and <span class="bcp14">MUST NOT</span> be a future day. Any day satisfying these two conditions
+is valid; <code>day_count</code> need not be the day on which the RUUID
+is generated, and an implementation <span class="bcp14">MAY</span> reuse the same
+<code>day_count</code> for many RUUIDs (e.g., the earliest day of its
+tenure, advancing only when the 2^28 sequence space is
+exhausted). The count wraps after 2^20 days (approximately
+year 4896).<a href="#section-7.3-4.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-7.3-4.2">
+            <p id="section-7.3-4.2.1"><code>sequence</code> is a 28-bit value unique within
+<code>(network, type, day_count)</code>.<a href="#section-7.3-4.2.1" class="pilcrow">¶</a></p>
+</li>
+        </ul>
+<p id="section-7.3-5">Successive controllers of a network prefix hold disjoint sets of
+tenure days, so the two <span class="bcp14">MUST</span> conditions above guarantee that
+their <code>day_count</code> values do not overlap, and identifiers from
+different controllers cannot collide even without coordination
+between them.<a href="#section-7.3-5" class="pilcrow">¶</a></p>
+<p id="section-7.3-6">This yields 2^28 = 268,435,456 RUUIDs per <code>(network, type, day)</code>
+and, across the 1024 type values, approximately 275 billion RUUIDs
+per network prefix per day.<a href="#section-7.3-6" class="pilcrow">¶</a></p>
+<p id="section-7.3-7">The <code>sequence</code> uniqueness requirement is scoped to a single day
+within a single <code>(network, type)</code>; coordination across days,
+across types, and across network prefixes is not required.
+Implementations <span class="bcp14">MAY</span> satisfy it with a counter, a time-of-day
+component with within-period randomness, deliberate partitioning
+across cooperating generators, or any other scheme. Random
+selection from the 28-bit space achieves a 2^-14 collision
+probability at approximately 16,000 RUUIDs per <code>(network, type,
+day)</code> and degrades sharply at higher volumes; coordination of
+some form is required to approach the per-day maximum.<a href="#section-7.3-7" class="pilcrow">¶</a></p>
+<p id="section-7.3-8">Resolvers <span class="bcp14">MUST NOT</span> interpret this structure. RUUIDs constructed
+this way are byte-indistinguishable from RUUIDs with opaque
+identifiers; the convention is a generator-side discipline that
+helps cooperating generators avoid collisions, not a resolution
+input.<a href="#section-7.3-8" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="collision-tradeoffs">
+<section id="section-7.4">
+        <h3 id="name-collisions">
+<a href="#section-7.4" class="section-number selfRef">7.4. </a><a href="#name-collisions" class="section-name selfRef">Collisions</a>
+        </h3>
+<p id="section-7.4-1">The 48-bit identifier yields a ~2^24 birthday bound for random
+identifiers within a single <code>(network, type)</code> tuple, which provide
+uncoordinated collision avoidance via randomness. The "uniqueness
+durability" of RUUIDs may be less in some cases than with other UUID
+versions, such as those based on hashes, timestamps, or pseudo-random
+number generators.  For example, RUUIDs generated after control of
+network id has passed to a different entity may be more prone to
+collision than other UUID versions, if they are pooled in the same
+databases or datastreams with RUUIDs from a previous controller of the
+network id.<a href="#section-7.4-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+</section>
+</div>
+<div id="iana">
+<section id="section-8">
+      <h2 id="name-iana-considerations">
+<a href="#section-8" class="section-number selfRef">8. </a><a href="#name-iana-considerations" class="section-name selfRef">IANA Considerations</a>
+      </h2>
+<p id="section-8-1">This document requests:<a href="#section-8-1" class="pilcrow">¶</a></p>
+<ol start="1" type="1" class="normal type-1" id="section-8-2">
+<li id="section-8-2.1">
+          <p id="section-8-2.1.1">Assignment of a dedicated UUID version to this specification,
+provisionally requested as version 9 (or, if 9 is unavailable, the
+next unassigned UUID version). See <span>[<a href="#RFC9562" class="cite xref">RFC9562</a>]</span>. Pending such
+allocation, implementations use the RFC 9562 experimental version 8.<a href="#section-8-2.1.1" class="pilcrow">¶</a></p>
+</li>
+        <li id="section-8-2.2">
+          <p id="section-8-2.2.1">Establishment of an "RUUID TXT Prefix Registry" administered
+under IETF Review <span>[<a href="#RFC8126" class="cite xref">RFC8126</a>]</span>, with the initial entry <code>v=ruuid1</code>
+referencing this document.<a href="#section-8-2.2.1" class="pilcrow">¶</a></p>
+</li>
+        <li id="section-8-2.3">
+          <p id="section-8-2.3.1">Registration of <code>uuid-document.json</code> in the "Well-Known URIs"
+registry per <span>[<a href="#RFC8615" class="cite xref">RFC8615</a>]</span>, referencing this document. The
+well-known URI provides the default UUID-document location
+defined in <a href="#default-doc-uri" class="auto internal xref">Section 4.4.1</a>.<a href="#section-8-2.3.1" class="pilcrow">¶</a></p>
+</li>
+      </ol>
+</section>
+</div>
+<div id="security-considerations">
+<section id="section-9">
+      <h2 id="name-security-considerations">
+<a href="#section-9" class="section-number selfRef">9. </a><a href="#name-security-considerations" class="section-name selfRef">Security Considerations</a>
+      </h2>
+<div id="registry-endpoint-trust">
+<section id="section-9.1">
+        <h3 id="name-registry-endpoint-trust">
+<a href="#section-9.1" class="section-number selfRef">9.1. </a><a href="#name-registry-endpoint-trust" class="section-name selfRef">Registry endpoint trust</a>
+        </h3>
+<p id="section-9.1-1">RUUID resolution inherits its registry endpoint's trust substrate:
+a DNS-protocol endpoint inherits the DNS hierarchy (DNSSEC, where
+deployed, authenticates the <em>current</em> operator rather than
+continuity across transfers; see <a href="#prefix-transfer" class="auto internal xref">Section 9.2</a>); an HTTP API
+endpoint inherits the TLS connection to the configured URL
+(<span>[<a href="#RFC9525" class="cite xref">RFC9525</a>]</span>) plus whatever continuity guarantees the operator
+publishes out-of-band. Strengthening trust beyond either substrate
+(signed records, externally rooted continuity evidence, cross-checking)
+is out of scope.<a href="#section-9.1-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="prefix-transfer">
+<section id="section-9.2">
+        <h3 id="name-prefix-transfer-and-long-te">
+<a href="#section-9.2" class="section-number selfRef">9.2. </a><a href="#name-prefix-transfer-and-long-te" class="section-name selfRef">Prefix transfer and long-term durability</a>
+        </h3>
+<p id="section-9.2-1">An RUUID's identifier role is unconditional, but its resolution role
+depends on continued control of the network prefix and its
+reverse-DNS delegation. IP prefixes can be transferred between
+operators; DNS provides no notion of <em>continuity of identity</em> across
+a transfer (a new operator configuring reverse DNS competently is
+indistinguishable from the original, even with DNSSEC).<a href="#section-9.2-1" class="pilcrow">¶</a></p>
+<p id="section-9.2-2">Three observable states at Phase 1:<a href="#section-9.2-2" class="pilcrow">¶</a></p>
+<p id="section-9.2-3"><em>Still valid.</em> PTR returns the intended domain; the binding is
+intact.<a href="#section-9.2-3" class="pilcrow">¶</a></p>
+<p id="section-9.2-4"><em>Detectably rotted.</em> The prefix is no longer maintained for RUUID
+purposes (NXDOMAIN, or a PTR to a domain serving no UUID document).
+The resolver gets a clear failure signal — better than plain UUIDs
+(no resolution at all) or a lapsed HTTPS URL (indistinguishable 404).<a href="#section-9.2-4" class="pilcrow">¶</a></p>
+<p id="section-9.2-5"><em>Commandeered.</em> The prefix has been reassigned and the new operator
+serves a PTR of their choosing. The resolver sees an authentic
+(DNSSEC-validatable) PTR leading to an unintended domain. This is
+the genuine new failure mode RUUID introduces; mitigating it
+generally is an open problem for the IETF and address-registry
+community.<a href="#section-9.2-5" class="pilcrow">¶</a></p>
+<p id="section-9.2-6">Network prefixes used in RUUIDs <span class="bcp14">SHOULD</span> be ones expected to be held
+for the identifiers' operational lifetime; native IPv6 from a
+durably held PA/PI allocation is the strongest choice. The 6to4-encoded IPv4
+form inherits IPv4-transfer risk. Consumers <span class="bcp14">SHOULD</span> record the PTR
+target at first resolution and compare on later resolutions; this
+is trust-on-first-use, with the usual caveat that it offers nothing
+to a consumer whose first encounter is after the change.<a href="#section-9.2-6" class="pilcrow">¶</a></p>
+<p id="section-9.2-7">An HTTP API endpoint's Phase 1 trust model is the registry
+operator's, not IP-prefix-transfer. The endpoint URL is a
+security-relevant configuration item; continuity across a change of
+registry operator is whatever the registry operator publishes
+out-of-band. It does
+not address first contact, for which an unconfigured consumer must
+use the DNS-protocol endpoint. Consumers consulting both endpoints
+get redundant coverage; disagreement <span class="bcp14">SHOULD</span> be treated as
+compromise of one or both.<a href="#section-9.2-7" class="pilcrow">¶</a></p>
+<p id="section-9.2-8">Phase 2 is plain URI resolution. This spec places no constraint on
+the URI scheme; RUUID inherits whatever durability properties the
+scheme provides. The common case is HTTPS, with the same partial
+trust model that governs every HTTPS link on the web.<a href="#section-9.2-8" class="pilcrow">¶</a></p>
+<p id="section-9.2-9">Even when resolution rots or is commandeered, the RUUID remains a
+valid identifier for its referent in the consumer's own records.<a href="#section-9.2-9" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="privacy">
+<section id="section-9.3">
+        <h3 id="name-privacy">
+<a href="#section-9.3" class="section-number selfRef">9.3. </a><a href="#name-privacy" class="section-name selfRef">Privacy</a>
+        </h3>
+<p id="section-9.3-1">An RUUID discloses a network prefix associated with its referent.
+This is generally similar in sensitivity to the domain itself, but
+in some configurations may be more revealing (e.g., a customer
+prefix inside a hosting provider). Consider this when choosing the
+network prefix for an RUUID.<a href="#section-9.3-1" class="pilcrow">¶</a></p>
+<p id="section-9.3-2">When the recommended construction (<a href="#identifier-construction" class="auto internal xref">Section 7.3</a>) is
+used, the RUUID's <code>day_count</code> discloses a day on which the
+generator held the network prefix — information of similar
+character to public WHOIS and reverse-DNS delegation records. To
+suppress even this signal, use an opaque 48-bit identifier
+instead, subject to <a href="#collision-tradeoffs" class="auto internal xref">Section 7.4</a>.<a href="#section-9.3-2" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="identifier-collision">
+<section id="section-9.4">
+        <h3 id="name-identifier-collision">
+<a href="#section-9.4" class="section-number selfRef">9.4. </a><a href="#name-identifier-collision" class="section-name selfRef">Identifier collision</a>
+        </h3>
+<p id="section-9.4-1">RUUIDs do not provide cryptographic uniqueness guarantees beyond
+what the chosen identifier scheme provides. RUUIDs generated with
+small counter-style identifiers are vulnerable to identifier
+guessing; when this is a concern, use random identifiers filling
+the available width.<a href="#section-9.4-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="dos-surface">
+<section id="section-9.5">
+        <h3 id="name-dos-surface">
+<a href="#section-9.5" class="section-number selfRef">9.5. </a><a href="#name-dos-surface" class="section-name selfRef">DoS surface</a>
+        </h3>
+<p id="section-9.5-1">Adversarial RUUIDs could direct registry queries at arbitrary
+network prefixes and HTTPS fetches at arbitrary URLs. Resolvers
+<span class="bcp14">SHOULD</span> apply standard DNS rate-limiting and HTTP client limits, and
+<span class="bcp14">SHOULD</span> cache UUID documents per domain so mass ingestion from one
+domain does not multiply fetches.<a href="#section-9.5-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+</section>
+</div>
+<div id="sec-combined-references">
+<section id="section-10">
+      <h2 id="name-references">
+<a href="#section-10" class="section-number selfRef">10. </a><a href="#name-references" class="section-name selfRef">References</a>
+      </h2>
+<div id="sec-normative-references">
+<section id="section-10.1">
+        <h3 id="name-normative-references">
+<a href="#section-10.1" class="section-number selfRef">10.1. </a><a href="#name-normative-references" class="section-name selfRef">Normative References</a>
+        </h3>
+<dl class="references">
+<dt id="RFC1035">[RFC1035]</dt>
+        <dd>
+<span class="refAuthor">Mockapetris, P.</span>, <span class="refTitle">"Domain names - implementation and specification"</span>, <span class="seriesInfo">STD 13</span>, <span class="seriesInfo">RFC 1035</span>, <span class="seriesInfo">DOI 10.17487/RFC1035</span>, <time datetime="1987-11" class="refDate">November 1987</time>, <span>&lt;<a href="https://www.rfc-editor.org/info/rfc1035">https://www.rfc-editor.org/info/rfc1035</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC9562">[RFC9562]</dt>
+        <dd>
+<span class="refAuthor">Davis, K.</span>, <span class="refAuthor">Peabody, B.</span>, and <span class="refAuthor">P. Leach</span>, <span class="refTitle">"Universally Unique IDentifiers (UUIDs)"</span>, <span class="seriesInfo">RFC 9562</span>, <span class="seriesInfo">DOI 10.17487/RFC9562</span>, <time datetime="2024-05" class="refDate">May 2024</time>, <span>&lt;<a href="https://www.rfc-editor.org/info/rfc9562">https://www.rfc-editor.org/info/rfc9562</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC7553">[RFC7553]</dt>
+        <dd>
+<span class="refAuthor">Faltstrom, P.</span> and <span class="refAuthor">O. Kolkman</span>, <span class="refTitle">"The Uniform Resource Identifier (URI) DNS Resource Record"</span>, <span class="seriesInfo">RFC 7553</span>, <span class="seriesInfo">DOI 10.17487/RFC7553</span>, <time datetime="2015-06" class="refDate">June 2015</time>, <span>&lt;<a href="https://www.rfc-editor.org/info/rfc7553">https://www.rfc-editor.org/info/rfc7553</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC8259">[RFC8259]</dt>
+        <dd>
+<span class="refAuthor">Bray, T., Ed.</span>, <span class="refTitle">"The JavaScript Object Notation (JSON) Data Interchange Format"</span>, <span class="seriesInfo">STD 90</span>, <span class="seriesInfo">RFC 8259</span>, <span class="seriesInfo">DOI 10.17487/RFC8259</span>, <time datetime="2017-12" class="refDate">December 2017</time>, <span>&lt;<a href="https://www.rfc-editor.org/info/rfc8259">https://www.rfc-editor.org/info/rfc8259</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC8615">[RFC8615]</dt>
+        <dd>
+<span class="refAuthor">Nottingham, M.</span>, <span class="refTitle">"Well-Known Uniform Resource Identifiers (URIs)"</span>, <span class="seriesInfo">RFC 8615</span>, <span class="seriesInfo">DOI 10.17487/RFC8615</span>, <time datetime="2019-05" class="refDate">May 2019</time>, <span>&lt;<a href="https://www.rfc-editor.org/info/rfc8615">https://www.rfc-editor.org/info/rfc8615</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC9111">[RFC9111]</dt>
+        <dd>
+<span class="refAuthor">Fielding, R., Ed.</span>, <span class="refAuthor">Nottingham, M., Ed.</span>, and <span class="refAuthor">J. Reschke, Ed.</span>, <span class="refTitle">"HTTP Caching"</span>, <span class="seriesInfo">STD 98</span>, <span class="seriesInfo">RFC 9111</span>, <span class="seriesInfo">DOI 10.17487/RFC9111</span>, <time datetime="2022-06" class="refDate">June 2022</time>, <span>&lt;<a href="https://www.rfc-editor.org/info/rfc9111">https://www.rfc-editor.org/info/rfc9111</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC9525">[RFC9525]</dt>
+        <dd>
+<span class="refAuthor">Saint-Andre, P.</span> and <span class="refAuthor">R. Salz</span>, <span class="refTitle">"Service Identity in TLS"</span>, <span class="seriesInfo">RFC 9525</span>, <span class="seriesInfo">DOI 10.17487/RFC9525</span>, <time datetime="2023-11" class="refDate">November 2023</time>, <span>&lt;<a href="https://www.rfc-editor.org/info/rfc9525">https://www.rfc-editor.org/info/rfc9525</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="W3C-CID">[W3C-CID]</dt>
+        <dd>
+<span class="refTitle">"Controlled Identifiers v1.0"</span>, <span class="seriesInfo">W3C Working Draft</span>, <span>n.d.</span>, <span>&lt;<a href="https://www.w3.org/TR/cid-1.0/">https://www.w3.org/TR/cid-1.0/</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC2119">[RFC2119]</dt>
+        <dd>
+<span class="refAuthor">Bradner, S.</span>, <span class="refTitle">"Key words for use in RFCs to Indicate Requirement Levels"</span>, <span class="seriesInfo">BCP 14</span>, <span class="seriesInfo">RFC 2119</span>, <span class="seriesInfo">DOI 10.17487/RFC2119</span>, <time datetime="1997-03" class="refDate">March 1997</time>, <span>&lt;<a href="https://www.rfc-editor.org/info/rfc2119">https://www.rfc-editor.org/info/rfc2119</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC8174">[RFC8174]</dt>
+        <dd>
+<span class="refAuthor">Leiba, B.</span>, <span class="refTitle">"Ambiguity of Uppercase vs Lowercase in RFC 2119 Key Words"</span>, <span class="seriesInfo">BCP 14</span>, <span class="seriesInfo">RFC 8174</span>, <span class="seriesInfo">DOI 10.17487/RFC8174</span>, <time datetime="2017-05" class="refDate">May 2017</time>, <span>&lt;<a href="https://www.rfc-editor.org/info/rfc8174">https://www.rfc-editor.org/info/rfc8174</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC3986">[RFC3986]</dt>
+      <dd>
+<span class="refAuthor">Berners-Lee, T.</span>, <span class="refAuthor">Fielding, R.</span>, and <span class="refAuthor">L. Masinter</span>, <span class="refTitle">"Uniform Resource Identifier (URI): Generic Syntax"</span>, <span class="seriesInfo">STD 66</span>, <span class="seriesInfo">RFC 3986</span>, <span class="seriesInfo">DOI 10.17487/RFC3986</span>, <time datetime="2005-01" class="refDate">January 2005</time>, <span>&lt;<a href="https://www.rfc-editor.org/info/rfc3986">https://www.rfc-editor.org/info/rfc3986</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+</dl>
+</section>
+</div>
+<div id="sec-informative-references">
+<section id="section-10.2">
+        <h3 id="name-informative-references">
+<a href="#section-10.2" class="section-number selfRef">10.2. </a><a href="#name-informative-references" class="section-name selfRef">Informative References</a>
+        </h3>
+<dl class="references">
+<dt id="RFC3056">[RFC3056]</dt>
+        <dd>
+<span class="refAuthor">Carpenter, B.</span> and <span class="refAuthor">K. Moore</span>, <span class="refTitle">"Connection of IPv6 Domains via IPv4 Clouds"</span>, <span class="seriesInfo">RFC 3056</span>, <span class="seriesInfo">DOI 10.17487/RFC3056</span>, <time datetime="2001-02" class="refDate">February 2001</time>, <span>&lt;<a href="https://www.rfc-editor.org/info/rfc3056">https://www.rfc-editor.org/info/rfc3056</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC7526">[RFC7526]</dt>
+        <dd>
+<span class="refAuthor">Troan, O.</span> and <span class="refAuthor">B. Carpenter, Ed.</span>, <span class="refTitle">"Deprecating the Anycast Prefix for 6to4 Relay Routers"</span>, <span class="seriesInfo">BCP 196</span>, <span class="seriesInfo">RFC 7526</span>, <span class="seriesInfo">DOI 10.17487/RFC7526</span>, <time datetime="2015-05" class="refDate">May 2015</time>, <span>&lt;<a href="https://www.rfc-editor.org/info/rfc7526">https://www.rfc-editor.org/info/rfc7526</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC4501">[RFC4501]</dt>
+        <dd>
+<span class="refAuthor">Josefsson, S.</span>, <span class="refTitle">"Domain Name System Uniform Resource Identifiers"</span>, <span class="seriesInfo">RFC 4501</span>, <span class="seriesInfo">DOI 10.17487/RFC4501</span>, <time datetime="2006-05" class="refDate">May 2006</time>, <span>&lt;<a href="https://www.rfc-editor.org/info/rfc4501">https://www.rfc-editor.org/info/rfc4501</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC8484">[RFC8484]</dt>
+        <dd>
+<span class="refAuthor">Hoffman, P.</span> and <span class="refAuthor">P. McManus</span>, <span class="refTitle">"DNS Queries over HTTPS (DoH)"</span>, <span class="seriesInfo">RFC 8484</span>, <span class="seriesInfo">DOI 10.17487/RFC8484</span>, <time datetime="2018-10" class="refDate">October 2018</time>, <span>&lt;<a href="https://www.rfc-editor.org/info/rfc8484">https://www.rfc-editor.org/info/rfc8484</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC8482">[RFC8482]</dt>
+        <dd>
+<span class="refAuthor">Abley, J.</span>, <span class="refAuthor">Gudmundsson, O.</span>, <span class="refAuthor">Majkowski, M.</span>, and <span class="refAuthor">E. Hunt</span>, <span class="refTitle">"Providing Minimal-Sized Responses to DNS Queries That Have QTYPE=ANY"</span>, <span class="seriesInfo">RFC 8482</span>, <span class="seriesInfo">DOI 10.17487/RFC8482</span>, <time datetime="2019-01" class="refDate">January 2019</time>, <span>&lt;<a href="https://www.rfc-editor.org/info/rfc8482">https://www.rfc-editor.org/info/rfc8482</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC8141">[RFC8141]</dt>
+        <dd>
+<span class="refAuthor">Saint-Andre, P.</span> and <span class="refAuthor">J. Klensin</span>, <span class="refTitle">"Uniform Resource Names (URNs)"</span>, <span class="seriesInfo">RFC 8141</span>, <span class="seriesInfo">DOI 10.17487/RFC8141</span>, <time datetime="2017-04" class="refDate">April 2017</time>, <span>&lt;<a href="https://www.rfc-editor.org/info/rfc8141">https://www.rfc-editor.org/info/rfc8141</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC3650">[RFC3650]</dt>
+        <dd>
+<span class="refAuthor">Sun, S.</span>, <span class="refAuthor">Lannom, L.</span>, and <span class="refAuthor">B. Boesch</span>, <span class="refTitle">"Handle System Overview"</span>, <span class="seriesInfo">RFC 3650</span>, <span class="seriesInfo">DOI 10.17487/RFC3650</span>, <time datetime="2003-11" class="refDate">November 2003</time>, <span>&lt;<a href="https://www.rfc-editor.org/info/rfc3650">https://www.rfc-editor.org/info/rfc3650</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="W3C-DID">[W3C-DID]</dt>
+        <dd>
+<span class="refTitle">"Decentralized Identifiers (DIDs) v1.0 — Core architecture, data model, and representations"</span>, <span class="seriesInfo">W3C Recommendation REC-did-core-20220719</span>, <time datetime="2022" class="refDate">2022</time>, <span>&lt;<a href="https://www.w3.org/TR/did-core/">https://www.w3.org/TR/did-core/</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+<dt id="RFC8126">[RFC8126]</dt>
+      <dd>
+<span class="refAuthor">Cotton, M.</span>, <span class="refAuthor">Leiba, B.</span>, and <span class="refAuthor">T. Narten</span>, <span class="refTitle">"Guidelines for Writing an IANA Considerations Section in RFCs"</span>, <span class="seriesInfo">BCP 26</span>, <span class="seriesInfo">RFC 8126</span>, <span class="seriesInfo">DOI 10.17487/RFC8126</span>, <time datetime="2017-06" class="refDate">June 2017</time>, <span>&lt;<a href="https://www.rfc-editor.org/info/rfc8126">https://www.rfc-editor.org/info/rfc8126</a>&gt;</span>. </dd>
+<dd class="break"></dd>
+</dl>
+</section>
+</div>
+</section>
+</div>
+<div id="open-issues">
+<section id="appendix-A">
+      <h2 id="name-open-issues">
+<a href="#name-open-issues" class="section-name selfRef">Open issues</a>
+      </h2>
+<p id="appendix-A-1">The following design questions remain open in this draft:<a href="#appendix-A-1" class="pilcrow">¶</a></p>
+<ol start="1" type="1" class="normal type-1" id="appendix-A-2">
+<li id="appendix-A-2.1">
+          <p id="appendix-A-2.1.1"><strong>Version number.</strong> Currently 8 (experimental); dedicated version
+requested from IANA, provisionally 9.<a href="#appendix-A-2.1.1" class="pilcrow">¶</a></p>
+</li>
+        <li id="appendix-A-2.2">
+          <p id="appendix-A-2.2.1"><strong><code>referent_kind</code> schema.</strong> The type-entry <code>referent_kind</code>
+object references IANA registries (RFC 6335 / 6838 / 8141) but
+does not yet define a normative sub-field schema.<a href="#appendix-A-2.2.1" class="pilcrow">¶</a></p>
+</li>
+        <li id="appendix-A-2.3">
+          <p id="appendix-A-2.3.1"><strong>Verifiability extensions.</strong> Signing keys published in the UUID
+document, signed URI/TXT records, address binding, and external
+trust roots are intentionally deferred to a follow-up document.<a href="#appendix-A-2.3.1" class="pilcrow">¶</a></p>
+</li>
+      </ol>
+</section>
+</div>
+<div id="authors-addresses">
+<section id="appendix-B">
+      <h2 id="name-authors-address">
+<a href="#name-authors-address" class="section-name selfRef">Author's Address</a>
+      </h2>
+<address class="vcard">
+        <div dir="auto" class="left"><span class="fn nameRole">Brian Mottershead</span></div>
+<div class="email">
+<span>Email:</span>
+<a href="mailto:bmotters@gmail.com" class="email">bmotters@gmail.com</a>
+</div>
+</address>
+</section>
+</div>
+<script>const toc = document.getElementById("toc");
+toc.querySelector("h2").addEventListener("click", e => {
+  toc.classList.toggle("active");
+});
+toc.querySelector("nav").addEventListener("click", e => {
+  toc.classList.remove("active");
+});
+</script>
+</body>
+</html>

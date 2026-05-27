@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>The did:uuid Method Specification v0.1</title>
+  <script src="https://www.w3.org/Tools/respec/respec-w3c" async class="remove"></script>
+  <script class="remove">
+    var respecConfig = {
+      specStatus: "unofficial",
+      shortName: "did-uuid-method",
+      editors: [{
+        name: "Brian Mottershead",
+        email: "bmotters@gmail.com"
+      }],
+      github: "",
+      edDraftURI: null,
+      latestVersion: null,
+      license: "cc-by",
+      localBiblio: {
+        "RUUID": {
+          title: "Resolvable Universally Unique Identifiers (RUUID)",
+          href: "../draft-motters-ruuid-00.html",
+          authors: ["Brian Mottershead"],
+          status: "Internet-Draft",
+          publisher: "IETF",
+          rawDate: "2026"
+        },
+        "CID": {
+          title: "Controlled Identifiers v1.0",
+          href: "https://www.w3.org/TR/cid-1.0/",
+          status: "W3C Working Draft",
+          publisher: "W3C"
+        }
+      }
+    };
+  </script>
+</head>
+<body>
+
+<h1 id="title">The <code>did:uuid</code> Method Specification v0.1</h1>
+
+<section id="abstract">
+  <p><code>did:uuid</code> is a W3C Decentralized Identifier (DID)
+  [[DID-CORE]] method whose method-specific identifier is a Resolvable
+  UUID (RUUID). Resolution of a <code>did:uuid</code> DID runs the
+  two-phase RUUID resolution pipeline to obtain a Phase 2 referent URI,
+  then synthesises a per-RUUID DID document that wraps that URI as a
+  service entry. The RUUID UUID document (a W3C Controlled Identifiers
+  document, [[CID]]) provides type information and optional
+  verification fields consumed during synthesis. No infrastructure
+  beyond what the RUUID specification already requires is needed.</p>
+</section>
+
+<section id="sotd">
+  <p>This is an unofficial editor's draft. It has no standing within the W3C
+  Process and is published to invite review while the companion
+  Internet-Draft, <cite><a href="../draft-motters-ruuid-00.html"
+  >Resolvable Universally Unique Identifiers (RUUID)</a></cite>
+  (<code>draft-motters-ruuid</code>), is in progress.</p>
+</section>
+
+<section id="introduction">
+  <h2>Introduction</h2>
+
+  <p>The RUUID specification defines a UUID format that encodes a
+  64-bit network prefix, a 48-bit identifier, and a 10-bit type
+  index, resolvable via DNS and various URI
+  infrastructure. RUUID resolution is two-phase: Phase 1 walks from
+  the RUUID's network prefix to a JSON-LD <em>UUID document</em> (a
+  W3C Controlled Identifiers document, [[CID]]) carrying
+  <code>id</code>, <code>controller</code>, <code>alsoKnownAs</code>,
+  and per-type <code>service</code> templates; Phase 2 applies the
+  matching service template to the 48-bit identifier to produce the
+  referent URI. The RUUID spec's normative output is that URI.</p>
+
+  <p>This document specifies a DID method, <code>did:uuid:X</code>,
+  that encapsulates an RUUID as a DID. The DID document for a
+  <code>did:uuid</code> DID is <em>synthesised</em> by this method on
+  top of the RUUID resolution pipeline's output: the resolved Phase 2
+  URI becomes the synthesised document's single service endpoint, and
+  the controller is the controller DID derived from the
+  RUUID's bits. The synthesis lives in this method, not in the RUUID
+  spec, so RUUID can serve consumers that have no DID requirement at
+  all.</p>
+</section>
+
+<section id="the-diduuid-format">
+  <h2>The <code>did:uuid</code> Format</h2>
+  <p>A <code>did:uuid</code> DID has the form:</p>
+  <pre>did-uuid        = "did:uuid:" canonical-ruuid
+canonical-ruuid = 8HEXDIG "-" 4HEXDIG "-" 4HEXDIG "-" 4HEXDIG "-" 12HEXDIG
+HEXDIG          = "0" / "1" / "2" / "3" / "4" / "5" / "6" / "7"
+                / "8" / "9" / "a" / "b" / "c" / "d" / "e" / "f"</pre>
+  <p>The method-specific identifier is the canonical textual form of an
+  RUUID, as defined in
+  <a href="../draft-motters-ruuid-00.html#format"
+  >the RUUID specification §3</a> (equivalent to the standard UUID
+  8-4-4-4-12 lowercase hexadecimal form). Implementations MUST treat
+  hexadecimal characters as lowercase; an identifier containing uppercase
+  hexadecimal is not a conformant <code>did:uuid</code> DID.</p>
+
+  <p>Within the RUUID bit layout:</p>
+  <ul>
+    <li>The UUID version MUST be 8 ([[RFC9562]] custom/experimental).</li>
+    <li>The UUID variant MUST be the [[RFC9562]] variant (binary <code>10</code>).</li>
+  </ul>
+
+  <p>A DID whose method-specific identifier parses as a UUID but does
+  not satisfy both constraints is not a <code>did:uuid</code> DID —
+  for example, a version-4 random UUID encoded
+  as <code>did:uuid:...</code> is syntactically not conformant, even
+  though the textual form matches.  Resolvers MUST reject such inputs.</p>
+
+  <p>Version 8 UUIDs are for custom/experimental use-cases, and
+  [[RFC9562]] does not provide a means to distinguish subtypes of this
+  version.  A version 8 UUID may therefore not be a Resolvable UUID. If
+  an attempt is made to resolve such a UUID, this will most likely
+  fail early; namely, at the DNS PTR lookup on the low 64-bits of the
+  UUID.</p>
+
+  <section id="example">
+    <h3>Example</h3>
+    <pre>did:uuid:abcdef01-2345-8200-8012-c000022a0000</pre>
+    <p>This DID's method-specific identifier decodes to an RUUID with network prefix
+    IPv4 <code>192.0.2.42</code> (6to4-encoded into the network field), type
+    <code>1</code>, identifier <code>0xabcdef012345</code>. Group 4 reads
+    <code>8012</code>: variant <code>10</code> at bits 63..62, type
+    <code>0000000001</code> at bits 61..52, and the top nibble of
+    <code>network_lo</code> (<code>2</code>) at bits 51..48.</p>
+  </section>
+</section>
+
+<section id="did-method-operations">
+  <h2>DID Method Operations</h2>
+  <p>The four DID operations defined by DID Core [[DID-CORE]] map onto RUUID
+  concepts as follows.</p>
+
+  <section id="create">
+    <h3>Create</h3>
+    <p>A <code>did:uuid</code> DID is <em>created</em> by the act of generating
+    an RUUID and publishing a UUID document that an RUUID resolver can fetch
+    for it. The generation and publication rules are out of scope for this
+    method and are normatively specified by the
+    <a href="../draft-motters-ruuid-00.html#generation-considerations"
+    >RUUID specification</a>:</p>
+    <ul>
+      <li>The generator has reverse-DNS authority over an IPv6 /64 (or a 6to4-encoded IPv4 /32) — the <em>network prefix</em>.</li>
+      <li>The generator chooses a 48-bit identifier value, unique within the
+      <code>(network, type)</code> tuple.</li>
+      <li>The 128-bit RUUID is constructed by assembling the network
+      prefix, type, identifier, version (8), and variant fields per
+      <a href="../draft-motters-ruuid-00.html#bit-layout">RUUID
+      §3</a>.</li>
+      <li>A UUID document SHOULD be published at a location discoverable
+      by the RUUID resolution pipeline (a PTR record on the reverse-DNS
+      name, optionally a URI/TXT record at
+      <code>_uuid.&lt;domain&gt;</code>, optionally an HTTP/HTTPS-served
+      JSON document at the well-known URL). A working PTR record alone is
+      sufficient for an RUUID to be resolvable to a default referent URL;
+      a UUID document is what makes the DID document informative.</li>
+    </ul>
+    <p>The resulting DID is <code>did:uuid:&lt;canonical-RUUID&gt;</code>.
+    No registration with any central authority is required: anyone who
+    controls a network prefix can generate and publish a <code>did:uuid</code>
+    DID under that network prefix.</p>
+  </section>
+
+  <section id="resolve">
+    <h3>Read (Resolve)</h3>
+    <p>A <code>did:uuid</code> DID resolver MUST perform the following
+    steps:</p>
+    <ol>
+      <li>Parse the method-specific identifier as an RUUID per
+      <a href="../draft-motters-ruuid-00.html#format"
+      >RUUID §3</a>. If parsing fails, return
+      <code>invalidDid</code>.</li>
+      <li>Verify that the RUUID's version is 8 and its variant is the
+      [[RFC9562]] variant. If either check fails, return
+      <code>invalidDid</code>.</li>
+      <li>Run the two-phase RUUID resolution pipeline defined in
+      <a href="../draft-motters-ruuid-00.html#resolution">RUUID
+      §4</a> to obtain a Phase 2 referent URI for this RUUID, and (when
+      Phase 1 succeeds) the UUID document fetched along the way. If
+      Phase 1 fails altogether — no document, and no usable
+      default-template fallback — return <code>notFound</code>.</li>
+      <li>Synthesise the DID document for the resolved DID per
+      <a href="#synthesis">§3.2.1 Synthesis</a>, using the Phase 2 URI as
+      the service endpoint and the UUID document (when present) for type
+      propagation and cross-checks.</li>
+    </ol>
+
+    <section id="synthesis">
+      <h4>Synthesis</h4>
+      <p>The RUUID pipeline's normative output is a referent URI, not a
+      DID document. This method synthesises the DID document on top of
+      that URI so the resolver can satisfy DID-Core §3.1 (the returned
+      document's <code>id</code> MUST equal the resolved DID):</p>
+
+      <ol>
+        <li>Derive the controller RUUID deterministically from the
+        resolved RUUID by zeroing the type and identifier fields. The
+        controller DID is
+        <code>did:uuid:&lt;controller-RUUID&gt;</code>.</li>
+        <li>Construct the per-RUUID DID document:
+          <ul>
+            <li><code>id</code> = the resolved DID.</li>
+            <li><code>controller</code> = the controller DID.</li>
+            <li><code>service</code> = a single entry wrapping the Phase
+            2 referent URI: <code>id</code> = the fragment
+            <code>#&lt;type&gt;</code> under the resolved DID;
+            <code>serviceEndpoint</code> = the Phase 2 URI;
+            <code>type</code> is propagated from the matching service
+            entry in the UUID document (RUUID §6.7 fallback ladder:
+            type-specific entry, then <code>#0</code> default), or a
+            generic placeholder when no UUID-document entry matched
+            (or no UUID document was fetched).</li>
+            <li><code>@context</code> = the DID-Core context
+            <code>https://www.w3.org/ns/did/v1</code>; an additional
+            entry MAY be appended when the UUID document's context
+            carries material the synthesised document needs.</li>
+          </ul>
+        </li>
+        <li>If the UUID document lists the controller DID in
+        <code>alsoKnownAs</code> or as its own <code>id</code>, that
+        is an explicit confirmation; mismatch (the UUID document
+        claims a different controller DID) SHOULD be logged, and
+        operators MAY configure the resolver to return
+        <code>notFound</code> on mismatch.</li>
+        <li>Return the synthesised document as the DID document.</li>
+      </ol>
+
+      <p>The reverse-DNS routing performed during Phase 1 is what
+      authorises the synthesis: only the controller of the prefix's
+      reverse-DNS zone can stand up the DNS path that the resolver
+      follows back to a registry endpoint and on to the UUID document.
+      The controller DID is fully determined by the resolved RUUID's
+      bits, so the resolver does not depend on the UUID document to
+      learn it; the document's optional <code>alsoKnownAs</code> entry
+      is a cross-check, not the root of trust.</p>
+
+      <section id="ruuid-did-equivalence">
+        <h5>Equivalence with the bare RUUID pipeline</h5>
+        <p>The synthesis is a pure function of the resolved RUUID's
+        bits and the UUID document's contents. As a result, resolving
+        <code>did:uuid:&lt;X&gt;</code> via this method and resolving
+        the bare RUUID <code>X</code> through the RUUID pipeline (with
+        the post-Phase-2 synthesis applied) return the same DID
+        document, byte-for-byte, against the same registry and UUID
+        document. The second path is just the first path with a
+        "parse the RUUID out of the DID method-specific id" prefix.</p>
+
+        <p>The practical consequence is that a consumer chooses the
+        interface that suits their tooling:</p>
+        <ul>
+          <li>A consumer that only needs the referent URI uses the
+          RUUID pipeline directly and reads its Phase 2 output.</li>
+          <li>A DID-aware consumer presents
+          <code>did:uuid:&lt;canonical-RUUID&gt;</code> to a DID
+          resolver and receives the synthesised DID document.</li>
+        </ul>
+        <p>Both paths exercise the same UUID document; they differ
+        only in whether the synthesis wrapper is applied to the
+        result. Demo case #1 of the reference
+        implementation shows both: the verbose mode prints the
+        Phase 2 referent URI and, separately, the
+        <em>DID Document for equivalent DID-encapsulated RUUID</em>
+        --- the latter is what a DID resolver would return for
+        <code>did:uuid:&lt;canonical-RUUID&gt;</code>.</p>
+      </section>
+
+      <p>When the UUID document carries the optional verification fields
+      <code>prefixes</code> and <code>domains</code>
+      (<a href="../draft-motters-ruuid-00.html#verification-fields"
+      >RUUID §6.4</a>), the resolver SHOULD cross-check the resolved
+      RUUID's network prefix against <code>prefixes</code> and the
+      domain returned by Phase 1 against <code>domains</code>. A
+      mismatch SHOULD be logged; whether to fail resolution is operator
+      policy.</p>
+    </section>
+
+    <section id="resolution-metadata">
+      <h4>Resolution Metadata</h4>
+      <p>The resolver MAY include the following entries in the
+      DID-resolution metadata it returns:</p>
+      <ul>
+        <li><code>contentType</code>:
+        <code>"application/did+json"</code> (or
+        <code>"application/did+ld+json"</code> if the document carries
+        <code>@context</code>, which a conformant RUUID UUID document
+        should).</li>
+        <li><code>error</code>: present only on failure; one of
+        <code>invalidDid</code>, <code>notFound</code>, or
+        <code>internalError</code>.</li>
+      </ul>
+    </section>
+  </section>
+
+  <section id="update">
+    <h3>Update</h3>
+    <p>A <code>did:uuid</code> DID is <em>updated</em> by changing the UUID
+    document that the RUUID resolution pipeline returns for it. The
+    mechanism depends on where the document is hosted:</p>
+    <ul>
+      <li>For an HTTPS-hosted document, publish new JSON at the same
+      URL.</li>
+      <li>For a document inlined in a <code>data:</code> URI in the URI
+      record at <code>_uuid.&lt;domain&gt;</code>, publish a new URI
+      record value.</li>
+      <li>For a document served via a referenced DID method (e.g.
+      <code>did:web:</code>, <code>did:plc:</code>), the update mechanism
+      is that method's update mechanism.</li>
+    </ul>
+    <p>Caching follows ordinary HTTP semantics: the registry endpoint and
+    the document host SHOULD set appropriate <code>Cache-Control</code>
+    headers, and resolvers MUST respect them.</p>
+  </section>
+
+  <section id="deactivate">
+    <h3>Deactivate</h3>
+    <p>A <code>did:uuid</code> DID is <em>deactivated</em> by removing the
+    published UUID document and the supporting registry-endpoint records,
+    leaving the default resolution path to return <code>notFound</code>.
+    The RUUID itself MUST NOT be reused for a different referent after
+    deactivation (<a
+    href="../draft-motters-ruuid-00.html#uniqueness">RUUID
+    §7.2</a>): the binding is one-way.</p>
+    <p>A resolver that fetches a previously-resolvable
+    <code>did:uuid</code> and now receives <code>notFound</code> SHOULD
+    treat the DID as deactivated.</p>
+  </section>
+</section>
+
+<section id="security-considerations">
+  <h2>Security Considerations</h2>
+  <p>The trust model of <code>did:uuid</code> is identical to the trust
+  model of the underlying RUUID resolution pipeline, summarised here for
+  convenience:</p>
+  <ul>
+    <li><strong>Reverse-DNS authority.</strong> A <code>did:uuid</code>
+    DID asserts that the holder of the encoded network prefix controls
+    the DID. The effective trust gate is not "owns an IP allocation"
+    but "holds reverse-DNS authority over that allocation" — the two
+    are separable services. Most residential customers receive IP
+    space (a /60 or /56 from many home ISPs) without a reverse-DNS
+    zone delegation; obtaining the delegation (NS records in the
+    parent's <code>in-addr.arpa</code> / <code>ip6.arpa</code> zone
+    pointed at one's own nameservers) generally requires a business
+    contract, a BGP-announced allocation, or a cloud-provider tier
+    that explicitly supports it. The population of entities that can
+    generate <code>did:uuid:</code> DIDs is therefore bounded by the
+    RIR / LIR / ISP allocation-and-delegation chain — a more
+    accountable gradient than e.g. domain-name registration. Two
+    residual risks worth naming: smaller allocations (per-customer
+    /64s, cloud-instance prefixes) carry weaker vetting at the bottom
+    of the chain; and BGP hijacking can give an attacker temporary
+    de-facto control of a network prefix, mitigated but not
+    eliminated by RPKI. Within this population, no further
+    good-faith guarantee is made.</li>
+    <li><strong>TLS for document fetch.</strong> When the UUID document is
+    fetched over HTTPS, the resolver MUST verify the TLS server identity
+    per [[RFC9525]]. Documents fetched over <code>http:</code>,
+    <code>data:</code>, or <code>file:</code> schemes have no
+    transport-layer authentication; resolvers SHOULD restrict the schemes
+    they will dereference based on operator policy.</li>
+    <li><strong>Document integrity.</strong> This version of
+    <code>did:uuid</code> does not define cryptographic verification of
+    the DID document. An attacker who can substitute the document (by
+    compromising DNS, the hosting server, or the network path) controls
+    the DID document. Future revisions of RUUID may add an optional
+    document-signing scheme; see the editor's note in
+    <a href="../draft-motters-ruuid-00.html#uuid-document">RUUID
+    §6</a>.</li>
+    <li><strong>Network-prefix transfer.</strong> An IP-address allocation
+    may be transferred, in which case control of the network prefix moves to the
+    new holder. RUUID's
+    <a href="../draft-motters-ruuid-00.html#prefix-transfer"
+    >Prefix Transfer Considerations</a> discuss the consequences for
+    resolvability; the same considerations apply to <code>did:uuid</code>
+    DIDs generated under the transferred prefix.</li>
+    <li><strong>RFC 9562 version 8 namespace.</strong> The
+    <code>did:uuid</code> syntax accepts any variant-1 version-8 UUID,
+    but version 8 is custom/experimental in [[RFC9562]] with no
+    inherent subtype discriminator. A v8 UUID generated by some other
+    scheme is therefore <em>syntactically</em> a valid
+    <code>did:uuid:</code> DID even though its bit layout was not
+    chosen with RUUID semantics in mind. The accidental case is
+    self-mitigating: resolution of a
+    non-RUUID v8 UUID requires the reverse-DNS PTR for its 64-bit
+    network field to point at a domain that publishes either a
+    <code>_uuid.&lt;domain&gt;</code> URI/TXT record or a
+    <code>/.well-known/uuid-document.json</code>; neither is
+    something an unrelated third party publishes by accident. The
+    realistic failure modes are therefore (a) a legitimate RUUID
+    generator whose network prefix happens to overlap with someone
+    else's v8 UUID bits — the resolver fetches that generator's UUID
+    document, substitutes the random identifier into a template, and
+    the consumer almost always sees a 404; and (b) an adversary who
+    deliberately stands
+    up RUUID infrastructure to harvest collisions, bounded by the
+    reverse-DNS-authority gradient above (the attacker can only
+    claim prefixes they actually control reverse-DNS for, and only
+    "catches" v8 UUIDs whose network-field bits happen to fall in
+    those prefixes). The structural fix — applying for a dedicated
+    UUID version so that "this is an RUUID" is signalled in the
+    UUID bits themselves — would close the namespace claim
+    entirely but is out of scope for this revision.</li>
+    <li><strong>Synthesis authorisation.</strong> The per-RUUID DID
+    document produced by <a href="#synthesis">§3.2.1 Synthesis</a> is
+    not byte-equal to the UUID document the resolver fetched:
+    <code>id</code> is the resolved DID, the service array contains a
+    single entry wrapping the Phase 2 referent URI, and the
+    controller is the controller DID derived deterministically from
+    the RUUID's bits. The authorisation for this synthesis is the
+    reverse-DNS path that Phase 1 followed: only the entity
+    controlling the prefix's reverse-DNS zone can stand up the
+    registry endpoint that the resolver consulted, so only that
+    entity can have caused the referent URI template to be served.
+    Standard DID-Core <code>alsoKnownAs</code> reciprocation
+    guidance — resolving the other DID and checking it links back —
+    adds no information for intra-<code>did:uuid:</code> links, which
+    all route through the same network prefix (resolving them again
+    returns to the same UUID document).
+    Cross-method <code>alsoKnownAs</code> entries
+    (<code>did:web:</code>, <code>did:plc:</code>, etc.) resolve via
+    independent infrastructure and the standard guidance applies
+    normally.</li>
+  </ul>
+  <p>A resolver SHOULD log resolution-time TLS validation failures and DNS
+  anomalies in a way that lets the operator distinguish transient failures
+  from probable compromise.</p>
+</section>
+
+<section id="privacy-considerations">
+  <h2>Privacy Considerations</h2>
+  <ul>
+    <li><strong>Resolution leaks.</strong> A <code>did:uuid</code>
+    resolution emits one or more DNS queries (PTR, URI/TXT) followed by an
+    HTTP fetch, each addressed to infrastructure the resolver did not
+    choose. Both the DNS path and the HTTPS path are visible to the
+    relevant network operators and to the operators of the registry
+    endpoint and document host. Resolvers that require resolution
+    confidentiality SHOULD use DNS-over-HTTPS or DNS-over-TLS, and
+    SHOULD consider HTTPS-fronted DID resolver gateways.</li>
+    <li><strong>Correlation.</strong> Successive resolutions of distinct
+    <code>did:uuid</code> DIDs sharing a network prefix reach the same
+    registry endpoint and (in the default deployment) the same UUID
+    document host. An observer can correlate per-prefix traffic even
+    when the individual DIDs are unrelated. When per-DID
+    unlinkability matters, partition network prefixes per logical
+    group of subjects.</li>
+    <li><strong>No on-chain footprint.</strong> Unlike many DID methods,
+    <code>did:uuid</code> involves no public ledger or registry. A DID's
+    existence is visible only to parties who possess it or who
+    successfully resolve it.</li>
+  </ul>
+</section>
+
+<section id="reference-implementation" class="informative">
+  <h2>Reference Implementation</h2>
+  <p>A reference resolver is implemented in
+  <a href="https://github.com/WorldResolvable/ruuid-tools"><code>ruuid-tools</code></a> (Python). The
+  handler lives at
+  <a href="https://github.com/WorldResolvable/ruuid-tools/blob/main/ruuid/did.py"
+  ><code>ruuid-tools/ruuid/did.py</code></a> and delegates resolution to
+  <code>ruuid.resolve.resolve_ruuid</code>. End-to-end behaviour is
+  exercised by demo case <code>#9c</code> in
+  <a href="https://github.com/WorldResolvable/ruuid-tools/blob/main/demo/demo.sh"
+  ><code>ruuid-tools/demo/demo.sh</code></a>.</p>
+</section>
+
+<section id="conformance">
+  <!-- ReSpec auto-fills a generic conformance section here. -->
+</section>
+
+</body>
+</html>

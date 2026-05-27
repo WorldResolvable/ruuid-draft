@@ -1,0 +1,10 @@
+# GitHub Pages (Jekyll) config for the published site at
+# https://worldresolvable.github.io/ruuid-draft/.
+#
+# `exclude:` lists paths Jekyll should not copy into the built
+# site. The .md is the I-D source; Jekyll's rendering of
+# kramdown-rfc constructs (e.g. {{RFC8141}}) is wrong, and we want
+# readers landing on Pages to see the canonical .txt or the proper
+# .html (built via xml2rfc) instead.
+exclude:
+  - draft-motters-ruuid-00.md
