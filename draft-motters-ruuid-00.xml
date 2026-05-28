@@ -14,7 +14,6 @@
 <!ENTITY RFC7553 SYSTEM "https://bib.ietf.org/public/rfc/bibxml/reference.RFC.7553.xml">
 <!ENTITY RFC8259 SYSTEM "https://bib.ietf.org/public/rfc/bibxml/reference.RFC.8259.xml">
 <!ENTITY RFC8615 SYSTEM "https://bib.ietf.org/public/rfc/bibxml/reference.RFC.8615.xml">
-<!ENTITY RFC9111 SYSTEM "https://bib.ietf.org/public/rfc/bibxml/reference.RFC.9111.xml">
 <!ENTITY RFC9525 SYSTEM "https://bib.ietf.org/public/rfc/bibxml/reference.RFC.9525.xml">
 <!ENTITY RFC2119 SYSTEM "https://bib.ietf.org/public/rfc/bibxml/reference.RFC.2119.xml">
 <!ENTITY RFC8174 SYSTEM "https://bib.ietf.org/public/rfc/bibxml/reference.RFC.8174.xml">
@@ -26,6 +25,7 @@
 <!ENTITY RFC8482 SYSTEM "https://bib.ietf.org/public/rfc/bibxml/reference.RFC.8482.xml">
 <!ENTITY RFC8141 SYSTEM "https://bib.ietf.org/public/rfc/bibxml/reference.RFC.8141.xml">
 <!ENTITY RFC3650 SYSTEM "https://bib.ietf.org/public/rfc/bibxml/reference.RFC.3650.xml">
+<!ENTITY RFC4122 SYSTEM "https://bib.ietf.org/public/rfc/bibxml/reference.RFC.4122.xml">
 <!ENTITY RFC8126 SYSTEM "https://bib.ietf.org/public/rfc/bibxml/reference.RFC.8126.xml">
 ]>
 
@@ -41,7 +41,7 @@
       </address>
     </author>
 
-    <date year="2026" month="May" day="27"/>
+    <date year="2026" month="May" day="28"/>
 
     <area>int</area>
     
@@ -92,11 +92,8 @@ a "UUID document" resolves the domain and the fields of the UUID to a
 URI of its referent, allowing the UUID to be dereferenced.</t>
 
 <t>The bytes of an RUUID fully specify the algorithm a resolver <bcp14>MUST</bcp14>
-follow; there is no fallback or probing. The default resolution path
-uses only DNS, which may include DNS-over-HTTPS, but with no new
-infrastructure required. An HTTP API is also specified, which may be
-used (<xref target="registry-http"/>) for pre-coordinated deployments, instead of
-DNS.</t>
+follow; there is no fallback or probing. Resolution uses only DNS,
+which may include DNS-over-HTTPS, with no new infrastructure required.</t>
 
 <t>An RUUID parses as a normal UUID with a well-defined version and the
 RFC 9562 variant; code that does not understand RUUIDs <bcp14>SHOULD</bcp14> treat
@@ -104,42 +101,56 @@ them as opaque.</t>
 
 <section anchor="prior-art"><name>Relation to other identifier systems</name>
 
-<t>Several existing schemes serve overlapping persistent-identifier
-roles. URNs (<xref target="RFC8141"/>) are URI-form identifiers
-<spanx style="verb">urn:NID:NSS</spanx>, requiring an IANA-registered Namespace Identifier
-per namespace; resolution is not standardized at the URN layer
-and varies per namespace. W3C Decentralized Identifiers (DIDs,
-<xref target="W3C-DID"/>) are URIs <spanx style="verb">did:METHOD:ID</spanx> with per-method
-registration and per-method resolution rules; an RUUID can be
-expressed as a DID via the <spanx style="verb">did:uuid</spanx> method, specified
-separately and summarised in <xref target="did-uuid"/>. Archival Resource Keys
-(ARKs), Handle-based identifiers (<xref target="RFC3650"/>), and Digital
-Object Identifiers (DOIs, layered on the Handle System) all
-depend on registration with an assignment authority — an ARK
-Name Assigning Authority Number, a Handle Service Provider, a
-DOI Registration Agency — and on dedicated resolution
-infrastructure (the ARK N2T resolver, the Global Handle Registry,
-<spanx style="verb">doi.org</spanx>).</t>
-
-<t>RUUIDs differ in two structural respects:</t>
+<t>RUUID builds on preexisting UUID versions and variants, and relates
+to several other identifier systems. The relevant prior art includes:</t>
 
 <t><list style="symbols">
+  <t>Preexisting UUID versions and variants (<xref target="RFC9562"/>), which provide
+coordination-free generation and enduring universal uniqueness, but
+whose identifiers are opaque: a UUID names a referent without
+indicating where to find it. An RUUID is itself a UUID (currently
+version 8 with variant 10) that adds resolvability to these
+properties, through a public and reproducible resolution method.</t>
+  <t>URNs (<xref target="RFC8141"/>) are URIs
+<spanx style="verb">urn:NID:NSS</spanx>, requiring an IANA-registered Namespace Identifier
+per namespace; resolution is not standardized at the URN layer
+and varies per namespace.  <xref target="RFC4122"/> defined a URN namespace,
+<spanx style="verb">urn:uuid:</spanx>, for UUIDs.</t>
+  <t>W3C Decentralized Identifiers (DIDs,
+<xref target="W3C-DID"/>) are URIs <spanx style="verb">did:METHOD:ID</spanx> with per-method
+registration and per-method resolution rules; an RUUID can be
+expressed as a DID via the <spanx style="verb">did:uuid</spanx> method, which is
+specified separately.</t>
+  <t>Numerous numbering schemes, such as IEEE Extended Unique Identifiers
+(EUI), Universal Product Codes (UPC), International Article Numbers
+(EAN), International Standard Book Numbers (ISBNs), Vehicle
+Identification Numbers (VINs), Object Identifiers (OIDs), Archival
+Resource Keys (ARKs), Handle-based identifiers (<xref target="RFC3650"/>), and
+Digital Object Identifiers (DOIs) depend on registration with an
+assignment authority. Many of these are resolvable but depend on
+dedicated resolution infrastructure.</t>
+</list></t>
+
+<t>RUUIDs differ from the prior art in the following ways.</t>
+
+<t><list style="symbols">
+  <t>Unlike many of the existing numbering schemes, assignment of UUIDs
+in general, and RUUIDs in particular, does not depend on a central
+registration authority.  By following the specification, anybody may
+generate a UUID and assign it to a referent with high confidence of
+enduring universal uniqueness, without dependence on authority or
+coordination with other parties generating UUIDs.  Accordingly, UUIDs
+from independent sources may be pooled in databases and datastreams,
+without coordination.</t>
   <t>They are 128-bit UUIDs in the conventional textual form
 (<xref section="4" sectionFormat="of" target="RFC9562"/>), not URIs. Code that does not know
 this specification can still parse, store, and compare them as
 UUIDs.</t>
-  <t>Resolution runs over the existing RIR / LIR / ISP allocation
-chain and the DNS reverse-zone delegation chain, with no
-dedicated registry or central resolver. The accountability
-gradient is the one that already governs IP address space.</t>
+  <t>Resolution of RUUIDs runs over the existing RIR / LIR / ISP
+allocation chain and the DNS reverse-zone delegation chain, with no
+dedicated registry or central resolver. The accountability gradient
+is the one that already governs IP address space.</t>
 </list></t>
-
-<t>The other schemes carry features RUUIDs do not — URN namespace-
-level abstraction, DID Document semantics, ARK qualifiers, Handle
-type-record system, DOI metadata services. RUUID is targeted at
-the narrower case where a UUID parser already exists in the
-consuming system and adding a referent URL is the only thing
-missing.</t>
 
 </section>
 <section anchor="applicability"><name>Applicability</name>
@@ -293,22 +304,22 @@ referent URI.</t>
 
 <t>A resolver executes:</t>
 
-<t>A. <strong>(Phase 1)</strong></t>
+<t>A. <strong>Phase 1</strong></t>
 
 <t><list style="numbers" type="1">
   <t>Determine address family. If the top 16 bits of the
 network field equal <spanx style="verb">0x2002</spanx>, the next 32 bits are the IPv4 /32
 (reverse zone <spanx style="verb">in-addr.arpa</spanx>); otherwise the full 64 bits are an
 IPv6 /64 network prefix (reverse zone <spanx style="verb">ip6.arpa</spanx>).</t>
-  <t><strong>(Phase 1)</strong> Consult a <em>registry endpoint</em> (<xref target="registry-endpoints"/>)
+  <t>Consult a <em>registry endpoint</em> (<xref target="registry-endpoints"/>)
 for the domain and UUID-document URI associated with the network
 prefix. This is the only step that <bcp14>MUST</bcp14> succeed; later steps have
 documented defaults.</t>
-  <t><strong>(Phase 1)</strong> Fetch the UUID document (<xref target="uuid-document"/>). On
+  <t>Fetch the UUID document (<xref target="uuid-document"/>). On
 fetch failure or non-JSON body, proceed with no document.</t>
 </list></t>
 
-<t>B. <strong>(Phase 2)</strong></t>
+<t>B. <strong>Phase 2</strong></t>
 
 <t><list style="numbers" type="1">
   <t>Construct the referent URI: pick the service entry
@@ -325,38 +336,24 @@ how many RUUIDs are generated under that domain.</t>
 <section anchor="registry-endpoints"><name>Registry endpoints</name>
 
 <t>A registry endpoint returns the domain and UUID-document URI for a
-given network prefix. Two endpoint types are defined:</t>
+given network prefix, reached over DNS. The resolver does a <spanx style="verb">PTR</spanx>
+query against the reverse-DNS name (<xref target="resolve-reverse-name"/>) for the
+domain, then a <spanx style="verb">URI</spanx> query at <spanx style="verb">_uuid.&lt;domain&gt;</spanx> (falling back to <spanx style="verb">TXT</spanx>;
+<xref target="doc-uri-resolution"/>) for the document URI. The system DNS resolver
+is the default; any DNS-protocol-speaking service with these semantics
+is conformant. The DNS resolver may be either traditional DNS over
+UDP/TCP port 53 or a DNS-over-HTTPS (DoH) service (<xref target="RFC8484"/>).</t>
 
-<t><strong>DNS-protocol endpoint.</strong> The resolver does a <spanx style="verb">PTR</spanx> query against
-the reverse-DNS name (<xref target="resolve-reverse-name"/>) for the domain, then
-a <spanx style="verb">URI</spanx> query at <spanx style="verb">_uuid.&lt;domain&gt;</spanx> (falling back to <spanx style="verb">TXT</spanx>;
-<xref target="doc-uri-resolution"/>) for the document URI. The system DNS
-resolver is the default; any DNS-protocol-speaking service with
-these semantics is conformant. The DNS resolver may be either the
-traditional UDP port 53 or a DNS over HTTPS (DoH) service, as defined
-by <xref target="RFC8484"/>.</t>
-
-<t><strong>HTTP API endpoint</strong> (<xref target="registry-http"/>). Returns the
-<spanx style="verb">(domain, uuid_document_uri)</spanx> pair as JSON in one round trip;
-deployable on a static-file host.</t>
-
-<t>The DNS-protocol endpoint is the universal default: every public
-IP prefix has a reverse-DNS chain. An HTTP API endpoint requires
-pre-configuration; a resolver without out-of-band context <bcp14>MUST</bcp14> use
-the DNS-protocol endpoint. When a consumer consults both endpoints,
-their responses for the same network prefix <bcp14>MUST</bcp14> agree; a
-disagreement <bcp14>SHOULD</bcp14> be treated as compromise of one or both.</t>
+<t>Every public IP prefix has a reverse-DNS chain, so resolution needs no
+dedicated registry or new infrastructure.</t>
 
 <section anchor="registry-endpoints-config"><name>Endpoint configuration</name>
 
-<t>A registry endpoint is configured by URL; the scheme determines the
-type. A DNS-protocol endpoint uses <spanx style="verb">dns://&lt;host&gt;[:&lt;port&gt;]</spanx>
-(<xref target="RFC4501"/>; port defaults to 53). A DoH-reachable DNS-protocol
-endpoint uses an <spanx style="verb">https://</spanx> URL (<xref target="RFC8484"/>), distinguished from the
-HTTP API endpoint by <spanx style="verb">Accept</spanx> (<spanx style="verb">application/dns-message</spanx>
-vs. <spanx style="verb">application/json</spanx>). An HTTP API endpoint uses
-<spanx style="verb">https://&lt;authority&gt;[/&lt;path&gt;]</spanx>; the resolver appends the lookup key
-from <xref target="registry-http"/>.</t>
+<t>A registry endpoint is configured by URL; the scheme determines how it
+is reached. A DNS-protocol endpoint uses <spanx style="verb">dns://&lt;host&gt;[:&lt;port&gt;]</spanx>
+(<xref target="RFC4501"/>; port defaults to 53). A DoH-reachable endpoint uses an
+<spanx style="verb">https://</spanx> URL (<xref target="RFC8484"/>), carrying wire-format DNS messages
+(<spanx style="verb">application/dns-message</spanx>).</t>
 
 </section>
 </section>
@@ -395,50 +392,6 @@ template (<xref target="default-template"/>). A UUID document hosted elsewhere i
 located by publishing a URI or TXT record at <spanx style="verb">_uuid.&lt;domain&gt;</spanx>.</t>
 
 </section>
-</section>
-<section anchor="registry-http"><name>Registry HTTP API endpoint</name>
-
-<t>An HTTP API registry endpoint returns the domain and UUID-document
-URI in one HTTPS round trip. The endpoint <bcp14>MUST</bcp14>
-recognise both URL forms:</t>
-
-<figure><artwork><![CDATA[
-GET <registry-url>/<reverse-dns-name>
-GET <registry-url>/<address>.uuid
-]]></artwork></figure>
-
-<t><spanx style="verb">&lt;reverse-dns-name&gt;</spanx> is the name the DNS-protocol endpoint uses
-(<xref target="resolve-reverse-name"/>, no trailing dot). <spanx style="verb">&lt;address&gt;</spanx> is dotted-
-quad IPv4 (for 6to4-encoded IPv4 /32s) or textual IPv6 (for IPv6
-/64 network prefixes); the <spanx style="verb">.uuid</spanx> suffix avoids collision with
-application paths at the same host. Both forms return byte-identical
-responses.</t>
-
-<t>The 200 response <bcp14>MUST</bcp14> be <spanx style="verb">application/json</spanx> (<xref target="RFC8259"/>) with at
-least:</t>
-
-<texttable>
-      <ttcol align='left'>name</ttcol>
-      <ttcol align='left'>type</ttcol>
-      <ttcol align='left'>meaning</ttcol>
-      <c><spanx style="verb">reverse_dns_name</spanx></c>
-      <c>string</c>
-      <c>the reverse-DNS name from the URL, echoed</c>
-      <c><spanx style="verb">domain</spanx></c>
-      <c>string</c>
-      <c>the domain</c>
-      <c><spanx style="verb">uuid_document_uri</spanx></c>
-      <c>string</c>
-      <c>the URI of the UUID document</c>
-</texttable>
-
-<t>Resolvers <bcp14>MUST</bcp14> ignore unknown members. A 404 means "no binding"
-(treat like NXDOMAIN at the PTR step). The mapping is long-lived
-per network prefix; registries <bcp14>SHOULD</bcp14> set a generous
-<spanx style="verb">Cache-Control: max-age</spanx> (standard HTTP caching, <xref target="RFC9111"/>,
-applies). The endpoint can be served as static files. The resolver
-<bcp14>MUST</bcp14> verify the endpoint's TLS identity per <xref target="RFC9525"/>.</t>
-
 </section>
 <section anchor="template-substitution"><name>Referent URI construction</name>
 
@@ -657,41 +610,33 @@ different URI structures.</t>
       <ttcol align='left'>field</ttcol>
       <ttcol align='left'>meaning</ttcol>
       <c><spanx style="verb">id</spanx></c>
-      <c>the fragment URI <spanx style="verb">#&lt;type&gt;</spanx> (e.g. <spanx style="verb">#1</spanx>, <spanx style="verb">#42</spanx>); the type value is the substring after <spanx style="verb">#</spanx></c>
+      <c>the fragment URI <spanx style="verb">#&lt;type&gt;</spanx> (e.g. <spanx style="verb">#1</spanx>, <spanx style="verb">#42</spanx>); the type value is the numeric string after <spanx style="verb">#</spanx></c>
       <c><spanx style="verb">type</spanx></c>
-      <c>human-readable label (<spanx style="verb">"User"</spanx>, <spanx style="verb">"CowTag"</spanx>); CID requires this field but this spec places no constraint on content</c>
+      <c>arbitrary string or set of strings.</c>
       <c><spanx style="verb">serviceEndpoint</spanx></c>
       <c>URI template per <xref target="template-substitution"/>; the default template applies if absent</c>
 </texttable>
 
-<t>Type entries <bcp14>MAY</bcp14> additionally carry <spanx style="verb">referent_kind</spanx> (structured
-metadata drawn from IANA registries, e.g. <spanx style="verb">service</spanx> from RFC 6335,
-<spanx style="verb">media_type</spanx> from RFC 6838, <spanx style="verb">urn_namespace</spanx> from RFC 8141) and a
-free-form <spanx style="verb">description</spanx>. All other fields are <bcp14>OPTIONAL</bcp14>. Consumers
-<bcp14>MUST</bcp14> ignore unknown fields. Service entries whose <spanx style="verb">id</spanx> does not
-match <spanx style="verb">#&lt;type&gt;</spanx> are not type entries and are ignored by the
-resolution pipeline.</t>
+<t>The <spanx style="verb">id</spanx> field is <bcp14>OPTIONAL</bcp14> in the Controlled Identifier
+specification, and may be any valid URI that is unique within the
+list of services. However, a RUUID resolver <bcp14>SHOULD</bcp14> ignore service
+entries with no <spanx style="verb">id</spanx>, and service entries whose <spanx style="verb">id</spanx> does not have a
+numeric fragment between #0 and #1023.</t>
+
+<t>The Controlled Identifier specification requires the <spanx style="verb">type</spanx> field,
+but the RUUID resolver makes no use of it. A resolver <bcp14>MUST NOT</bcp14> treat
+a missing <spanx style="verb">type</spanx> field as an error, even though a service entry
+lacking <spanx style="verb">type</spanx> does not conform to the Controlled Identifier
+specification. If present, a resolver <bcp14>MAY</bcp14> return the <spanx style="verb">type</spanx> value as
+additional information.</t>
+
+<t>The <spanx style="verb">serviceEndpoint</spanx> field is <bcp14>REQUIRED</bcp14> in the Controlled Identifier
+specification. When the RUUID resolver selects a service entry
+because its <spanx style="verb">id</spanx> fragment matches the RUUID's type value, the
+<spanx style="verb">serviceEndpoint</spanx> is the template used to construct the URI of the
+referent.</t>
 
 </section>
-</section>
-<section anchor="did-uuid"><name>The did:uuid DID method</name>
-
-<t>An RUUID is also a stable identifier for a W3C Decentralized
-Identifier (DID) document (<xref target="W3C-DID"/>). The <spanx style="verb">did:uuid</spanx> method:</t>
-
-<figure><artwork><![CDATA[
-did:uuid:<canonical-RUUID>
-]]></artwork></figure>
-
-<t>A <spanx style="verb">did:uuid</spanx> resolver performs RUUID resolution per <xref target="resolution"/>
-to obtain the Phase 2 referent URI, then synthesises a per-RUUID DID
-document wrapping that URI as a service entry, with <spanx style="verb">controller</spanx>
-derived from the RUUID's network prefix. The synthesis transform
-sits <em>above</em> the RUUID resolution pipeline, not inside it: the RUUID
-spec's normative output is a URI, and the DID document is a
-method-specific wrapper of that URI. The full method spec is
-published separately.</t>
-
 </section>
 </section>
 <section anchor="generation-considerations"><name>Generation Considerations</name>
@@ -712,7 +657,9 @@ on unrelated addresses, <bcp14>MAY</bcp14> share a single network prefix.</t>
 
 <t>Identifiers <bcp14>MUST</bcp14> be unique within <spanx style="verb">(network, type)</spanx>. Global
 uniqueness of RUUIDs follows from this property and the global
-uniqueness of IP allocations. Once an identifier is assigned, the
+uniqueness of IP allocations, provided the generating entity has
+control of the network prefix at generation-time and maintains
+that indefinitely.   Once an identifier is assigned, the
 binding <bcp14>MAY</bcp14> be retired but the identifier value <bcp14>MUST NOT</bcp14> be reused
 for a different referent.</t>
 
@@ -723,9 +670,10 @@ for a different referent.</t>
 48-bit identifier <bcp14>MAY</bcp14> be any value satisfying <xref target="uniqueness"/>.</t>
 
 <t>For an RUUID used outside the generator's local scope, where
-persistent universal uniqueness is required without ongoing
+persistent universal uniqueness is required without ongoing tenancy
+by the generator of the network prefix, and without ongoing
 coordination among independent generators, the identifier <bcp14>SHOULD</bcp14>
-be constructed as:</t>
+be constructed as follows:</t>
 
 <figure><artwork><![CDATA[
 identifier = (day_count << 28) | sequence
@@ -733,17 +681,16 @@ identifier = (day_count << 28) | sequence
 
 <t><list style="symbols">
   <t><spanx style="verb">day_count</spanx> is a 20-bit unsigned count of days since 2025-01-01
-00:00:00 UTC. The value <bcp14>MUST</bcp14> be a day on which the generator
-held reverse-DNS authority over the network prefix, and <bcp14>MUST
-NOT</bcp14> be a future day. Any day satisfying these two conditions
-is valid; <spanx style="verb">day_count</spanx> need not be the day on which the RUUID
-is generated, and an implementation <bcp14>MAY</bcp14> reuse the same
-<spanx style="verb">day_count</spanx> for many RUUIDs (e.g., the earliest day of its
-tenure, advancing only when the 2^28 sequence space is
-exhausted). The count wraps after 2^20 days (approximately
-year 4896).</t>
-  <t><spanx style="verb">sequence</spanx> is a 28-bit value unique within
-<spanx style="verb">(network, type, day_count)</spanx>.</t>
+00:00:00 UTC. The value <bcp14>MUST</bcp14> be a day on which the generator held
+reverse-DNS authority over the network prefix, and <bcp14>MUST NOT</bcp14> be a
+future day. Any day satisfying these two conditions is valid;
+<spanx style="verb">day_count</spanx> need not be the day on which the RUUID is generated, and
+an implementation <bcp14>MAY</bcp14> reuse the same <spanx style="verb">day_count</spanx> for many RUUIDs
+(e.g., the earliest day of its tenure of the network id, advancing
+only when the 2^28 sequence space is exhausted). The count wraps
+after 2^20 days (approximately year 4896).</t>
+  <t><spanx style="verb">sequence</spanx> is a 28-bit value unique within <spanx style="verb">(network, type,
+day_count)</spanx>.</t>
 </list></t>
 
 <t>Successive controllers of a network prefix hold disjoint sets of
@@ -754,7 +701,7 @@ between them.</t>
 
 <t>This yields 2^28 = 268,435,456 RUUIDs per <spanx style="verb">(network, type, day)</spanx>
 and, across the 1024 type values, approximately 275 billion RUUIDs
-per network prefix per day.</t>
+per network prefix per day of tenancy.</t>
 
 <t>The <spanx style="verb">sequence</spanx> uniqueness requirement is scoped to a single day
 within a single <spanx style="verb">(network, type)</spanx>; coordination across days,
@@ -764,8 +711,9 @@ component with within-period randomness, deliberate partitioning
 across cooperating generators, or any other scheme. Random
 selection from the 28-bit space achieves a 2^-14 collision
 probability at approximately 16,000 RUUIDs per <spanx style="verb">(network, type,
-day)</spanx> and degrades sharply at higher volumes; coordination of
-some form is required to approach the per-day maximum.</t>
+day)</spanx> and degrades sharply at higher volumes; coordination between
+multiple generator "workers" of some form is required to approach
+the per-day maximum.</t>
 
 <t>Resolvers <bcp14>MUST NOT</bcp14> interpret this structure. RUUIDs constructed
 this way are byte-indistinguishable from RUUIDs with opaque
@@ -815,12 +763,10 @@ defined in <xref target="default-doc-uri"/>.</t>
 <t>RUUID resolution inherits its registry endpoint's trust substrate:
 a DNS-protocol endpoint inherits the DNS hierarchy (DNSSEC, where
 deployed, authenticates the <em>current</em> operator rather than
-continuity across transfers; see <xref target="prefix-transfer"/>); an HTTP API
-endpoint inherits the TLS connection to the configured URL
-(<xref target="RFC9525"/>) plus whatever continuity guarantees the operator
-publishes out-of-band. Strengthening trust beyond either substrate
-(signed records, externally rooted continuity evidence, cross-checking)
-is out of scope.</t>
+continuity across transfers; see <xref target="prefix-transfer"/>). A DoH-reachable
+endpoint additionally relies on the TLS connection to the configured
+URL (<xref target="RFC9525"/>). Strengthening trust beyond that substrate (signed
+records, externally rooted continuity evidence) is out of scope.</t>
 
 </section>
 <section anchor="prefix-transfer"><name>Prefix transfer and long-term durability</name>
@@ -849,23 +795,13 @@ the genuine new failure mode RUUID introduces; mitigating it
 generally is an open problem for the IETF and address-registry
 community.</t>
 
-<t>Network prefixes used in RUUIDs <bcp14>SHOULD</bcp14> be ones expected to be held
-for the identifiers' operational lifetime; native IPv6 from a
-durably held PA/PI allocation is the strongest choice. The 6to4-encoded IPv4
-form inherits IPv4-transfer risk. Consumers <bcp14>SHOULD</bcp14> record the PTR
-target at first resolution and compare on later resolutions; this
-is trust-on-first-use, with the usual caveat that it offers nothing
-to a consumer whose first encounter is after the change.</t>
-
-<t>An HTTP API endpoint's Phase 1 trust model is the registry
-operator's, not IP-prefix-transfer. The endpoint URL is a
-security-relevant configuration item; continuity across a change of
-registry operator is whatever the registry operator publishes
-out-of-band. It does
-not address first contact, for which an unconfigured consumer must
-use the DNS-protocol endpoint. Consumers consulting both endpoints
-get redundant coverage; disagreement <bcp14>SHOULD</bcp14> be treated as
-compromise of one or both.</t>
+<t>Network prefixes used in RUUIDs <bcp14>SHOULD</bcp14> be ones expected to be held for
+the identifiers' operational lifetime; native IPv6 from a durably held
+PA/PI allocation is the strongest choice. The 6to4-encoded IPv4 form
+inherits IPv4-transfer risk. Consumers <bcp14>SHOULD</bcp14> record the PTR target at
+first resolution and compare on later resolutions; this is
+trust-on-first-use, with the usual caveat that it offers nothing to a
+consumer whose first encounter is after the change.</t>
 
 <t>Phase 2 is plain URI resolution. This spec places no constraint on
 the URI scheme; RUUID inherits whatever durability properties the
@@ -927,7 +863,6 @@ domain does not multiply fetches.</t>
 &RFC7553;
 &RFC8259;
 &RFC8615;
-&RFC9111;
 &RFC9525;
 <reference anchor="W3C-CID" target="https://www.w3.org/TR/cid-1.0/">
   <front>
@@ -955,6 +890,7 @@ domain does not multiply fetches.</t>
 &RFC8482;
 &RFC8141;
 &RFC3650;
+&RFC4122;
 <reference anchor="W3C-DID" target="https://www.w3.org/TR/did-core/">
   <front>
     <title>Decentralized Identifiers (DIDs) v1.0 — Core architecture, data model, and representations</title>
@@ -973,310 +909,268 @@ domain does not multiply fetches.</t>
 </references>
 
 
-<?line 802?>
-
-<section numbered="false" anchor="open-issues"><name>Open issues</name>
-
-<t>The following design questions remain open in this draft:</t>
-
-<t><list style="numbers" type="1">
-  <t><strong>Version number.</strong> Currently 8 (experimental); dedicated version
-requested from IANA, provisionally 9.</t>
-  <t><strong><spanx style="verb">referent_kind</spanx> schema.</strong> The type-entry <spanx style="verb">referent_kind</spanx>
-object references IANA registries (RFC 6335 / 6838 / 8141) but
-does not yet define a normative sub-field schema.</t>
-  <t><strong>Verifiability extensions.</strong> Signing keys published in the UUID
-document, signed URI/TXT records, address binding, and external
-trust roots are intentionally deferred to a follow-up document.</t>
-</list></t>
-
-</section>
-
 
   </back>
 
 <!-- ##markdown-source:
-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
-D4fEiQAA
+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
+kP0TMUnH+2GXYQ/+HmNMghT/H52iRvnwfwAA
 
 -->
 

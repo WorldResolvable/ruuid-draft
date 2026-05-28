@@ -3,9 +3,9 @@
 
 
 Network Working Group                                     B. Mottershead
-Internet-Draft                                               27 May 2026
+Internet-Draft                                               28 May 2026
 Intended status: Standards Track                                        
-Expires: 28 November 2026
+Expires: 29 November 2026
 
 
            Resolvable Universally Unique Identifiers (RUUID)
@@ -45,7 +45,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 28 November 2026.
+   This Internet-Draft will expire on 29 November 2026.
 
 
 
@@ -53,7 +53,7 @@ Status of This Memo
 
 
 
-Mottershead             Expires 28 November 2026                [Page 1]
+Mottershead             Expires 29 November 2026                [Page 1]
 
 Internet-Draft                    RUUID                         May 2026
 
@@ -77,7 +77,7 @@ Table of Contents
    1.  Introduction  . . . . . . . . . . . . . . . . . . . . . . . .   3
      1.1.  Relation to other identifier systems  . . . . . . . . . .   3
      1.2.  Applicability . . . . . . . . . . . . . . . . . . . . . .   4
-   2.  Conventions and Terminology . . . . . . . . . . . . . . . . .   4
+   2.  Conventions and Terminology . . . . . . . . . . . . . . . . .   5
    3.  RUUID Format  . . . . . . . . . . . . . . . . . . . . . . . .   5
      3.1.  Bit layout  . . . . . . . . . . . . . . . . . . . . . . .   5
      3.2.  The network prefix  . . . . . . . . . . . . . . . . . . .   6
@@ -88,46 +88,43 @@ Table of Contents
      4.2.  Registry endpoints  . . . . . . . . . . . . . . . . . . .   8
        4.2.1.  Endpoint configuration  . . . . . . . . . . . . . . .   8
      4.3.  Reverse-DNS name construction . . . . . . . . . . . . . .   8
-     4.4.  UUID document resolution  . . . . . . . . . . . . . . . .   9
+     4.4.  UUID document resolution  . . . . . . . . . . . . . . . .   8
        4.4.1.  Default document URI  . . . . . . . . . . . . . . . .   9
-     4.5.  Registry HTTP API endpoint  . . . . . . . . . . . . . . .   9
-     4.6.  Referent URI construction . . . . . . . . . . . . . . . .  10
-       4.6.1.  Template selection  . . . . . . . . . . . . . . . . .  10
-       4.6.2.  Default template  . . . . . . . . . . . . . . . . . .  10
-       4.6.3.  Placeholder substitution  . . . . . . . . . . . . . .  11
-   5.  TXT Record Format . . . . . . . . . . . . . . . . . . . . . .  12
-   6.  UUID Document . . . . . . . . . . . . . . . . . . . . . . . .  12
-     6.1.  Document fetch  . . . . . . . . . . . . . . . . . . . . .  12
-     6.2.  Document structure and evolution  . . . . . . . . . . . .  12
-     6.3.  Verification fields . . . . . . . . . . . . . . . . . . .  14
-     6.4.  Service entries (per-type referent templates) . . . . . .  14
-       6.4.1.  Type entry fields . . . . . . . . . . . . . . . . . .  15
-     6.5.  The did:uuid DID method . . . . . . . . . . . . . . . . .  15
-   7.  Generation Considerations . . . . . . . . . . . . . . . . . .  15
-     7.1.  Network prefix semantics  . . . . . . . . . . . . . . . .  16
-     7.2.  Uniqueness  . . . . . . . . . . . . . . . . . . . . . . .  16
+     4.5.  Referent URI construction . . . . . . . . . . . . . . . .   9
+       4.5.1.  Template selection  . . . . . . . . . . . . . . . . .   9
+       4.5.2.  Default template  . . . . . . . . . . . . . . . . . .   9
+       4.5.3.  Placeholder substitution  . . . . . . . . . . . . . .   9
+   5.  TXT Record Format . . . . . . . . . . . . . . . . . . . . . .  11
+   6.  UUID Document . . . . . . . . . . . . . . . . . . . . . . . .  11
+     6.1.  Document fetch  . . . . . . . . . . . . . . . . . . . . .  11
+     6.2.  Document structure and evolution  . . . . . . . . . . . .  11
+     6.3.  Verification fields . . . . . . . . . . . . . . . . . . .  12
+     6.4.  Service entries (per-type referent templates) . . . . . .  13
+       6.4.1.  Type entry fields . . . . . . . . . . . . . . . . . .  13
+   7.  Generation Considerations . . . . . . . . . . . . . . . . . .  14
+     7.1.  Network prefix semantics  . . . . . . . . . . . . . . . .  14
+     7.2.  Uniqueness  . . . . . . . . . . . . . . . . . . . . . . .  14
+     7.3.  Identifier construction . . . . . . . . . . . . . . . . .  14
+     7.4.  Collisions  . . . . . . . . . . . . . . . . . . . . . . .  16
 
 
 
-Mottershead             Expires 28 November 2026                [Page 2]
+Mottershead             Expires 29 November 2026                [Page 2]
 
 Internet-Draft                    RUUID                         May 2026
 
 
-     7.3.  Identifier construction . . . . . . . . . . . . . . . . .  16
-     7.4.  Collisions  . . . . . . . . . . . . . . . . . . . . . . .  17
-   8.  IANA Considerations . . . . . . . . . . . . . . . . . . . . .  17
-   9.  Security Considerations . . . . . . . . . . . . . . . . . . .  18
-     9.1.  Registry endpoint trust . . . . . . . . . . . . . . . . .  18
-     9.2.  Prefix transfer and long-term durability  . . . . . . . .  18
-     9.3.  Privacy . . . . . . . . . . . . . . . . . . . . . . . . .  19
-     9.4.  Identifier collision  . . . . . . . . . . . . . . . . . .  19
-     9.5.  DoS surface . . . . . . . . . . . . . . . . . . . . . . .  20
-   10. References  . . . . . . . . . . . . . . . . . . . . . . . . .  20
-     10.1.  Normative References . . . . . . . . . . . . . . . . . .  20
-     10.2.  Informative References . . . . . . . . . . . . . . . . .  21
-   Open issues . . . . . . . . . . . . . . . . . . . . . . . . . . .  22
-   Author's Address  . . . . . . . . . . . . . . . . . . . . . . . .  22
+   8.  IANA Considerations . . . . . . . . . . . . . . . . . . . . .  16
+   9.  Security Considerations . . . . . . . . . . . . . . . . . . .  16
+     9.1.  Registry endpoint trust . . . . . . . . . . . . . . . . .  16
+     9.2.  Prefix transfer and long-term durability  . . . . . . . .  17
+     9.3.  Privacy . . . . . . . . . . . . . . . . . . . . . . . . .  18
+     9.4.  Identifier collision  . . . . . . . . . . . . . . . . . .  18
+     9.5.  DoS surface . . . . . . . . . . . . . . . . . . . . . . .  18
+   10. References  . . . . . . . . . . . . . . . . . . . . . . . . .  18
+     10.1.  Normative References . . . . . . . . . . . . . . . . . .  18
+     10.2.  Informative References . . . . . . . . . . . . . . . . .  19
+   Author's Address  . . . . . . . . . . . . . . . . . . . . . . . .  20
 
 1.  Introduction
 
@@ -140,10 +137,9 @@ Internet-Draft                    RUUID                         May 2026
    dereferenced.
 
    The bytes of an RUUID fully specify the algorithm a resolver MUST
-   follow; there is no fallback or probing.  The default resolution path
-   uses only DNS, which may include DNS-over-HTTPS, but with no new
-   infrastructure required.  An HTTP API is also specified, which may be
-   used (Section 4.5) for pre-coordinated deployments, instead of DNS.
+   follow; there is no fallback or probing.  Resolution uses only DNS,
+   which may include DNS-over-HTTPS, with no new infrastructure
+   required.
 
    An RUUID parses as a normal UUID with a well-defined version and the
    RFC 9562 variant; code that does not understand RUUIDs SHOULD treat
@@ -151,45 +147,62 @@ Internet-Draft                    RUUID                         May 2026
 
 1.1.  Relation to other identifier systems
 
-   Several existing schemes serve overlapping persistent-identifier
-   roles.  URNs ([RFC8141]) are URI-form identifiers urn:NID:NSS,
-   requiring an IANA-registered Namespace Identifier per namespace;
-   resolution is not standardized at the URN layer and varies per
-   namespace.  W3C Decentralized Identifiers (DIDs, [W3C-DID]) are URIs
-   did:METHOD:ID with per-method registration and per-method resolution
-   rules; an RUUID can be expressed as a DID via the did:uuid method,
-   specified separately and summarised in Section 6.5.  Archival
-   Resource Keys (ARKs), Handle-based identifiers ([RFC3650]), and
-   Digital Object Identifiers (DOIs, layered on the Handle System) all
-   depend on registration with an assignment authority — an ARK Name
+   RUUID builds on preexisting UUID versions and variants, and relates
+   to several other identifier systems.  The relevant prior art
+   includes:
+
+   *  Preexisting UUID versions and variants ([RFC9562]), which provide
+      coordination-free generation and enduring universal uniqueness,
+      but whose identifiers are opaque: a UUID names a referent without
+      indicating where to find it.  An RUUID is itself a UUID (currently
+      version 8 with variant 10) that adds resolvability to these
+      properties, through a public and reproducible resolution method.
+
+   *  URNs ([RFC8141]) are URIs urn:NID:NSS, requiring an IANA-
+      registered Namespace Identifier per namespace; resolution is not
+      standardized at the URN layer and varies per namespace.  [RFC4122]
+      defined a URN namespace, urn:uuid:, for UUIDs.
 
 
 
-Mottershead             Expires 28 November 2026                [Page 3]
+Mottershead             Expires 29 November 2026                [Page 3]
 
 Internet-Draft                    RUUID                         May 2026
 
 
-   Assigning Authority Number, a Handle Service Provider, a DOI
-   Registration Agency — and on dedicated resolution infrastructure (the
-   ARK N2T resolver, the Global Handle Registry, doi.org).
+   *  W3C Decentralized Identifiers (DIDs, [W3C-DID]) are URIs
+      did:METHOD:ID with per-method registration and per-method
+      resolution rules; an RUUID can be expressed as a DID via the
+      did:uuid method, which is specified separately.
 
-   RUUIDs differ in two structural respects:
+   *  Numerous numbering schemes, such as IEEE Extended Unique
+      Identifiers (EUI), Universal Product Codes (UPC), International
+      Article Numbers (EAN), International Standard Book Numbers
+      (ISBNs), Vehicle Identification Numbers (VINs), Object Identifiers
+      (OIDs), Archival Resource Keys (ARKs), Handle-based identifiers
+      ([RFC3650]), and Digital Object Identifiers (DOIs) depend on
+      registration with an assignment authority.  Many of these are
+      resolvable but depend on dedicated resolution infrastructure.
+
+   RUUIDs differ from the prior art in the following ways.
+
+   *  Unlike many of the existing numbering schemes, assignment of UUIDs
+      in general, and RUUIDs in particular, does not depend on a central
+      registration authority.  By following the specification, anybody
+      may generate a UUID and assign it to a referent with high
+      confidence of enduring universal uniqueness, without dependence on
+      authority or coordination with other parties generating UUIDs.
+      Accordingly, UUIDs from independent sources may be pooled in
+      databases and datastreams, without coordination.
 
    *  They are 128-bit UUIDs in the conventional textual form (Section 4
       of [RFC9562]), not URIs.  Code that does not know this
       specification can still parse, store, and compare them as UUIDs.
 
-   *  Resolution runs over the existing RIR / LIR / ISP allocation chain
-      and the DNS reverse-zone delegation chain, with no dedicated
-      registry or central resolver.  The accountability gradient is the
-      one that already governs IP address space.
-
-   The other schemes carry features RUUIDs do not — URN namespace- level
-   abstraction, DID Document semantics, ARK qualifiers, Handle type-
-   record system, DOI metadata services.  RUUID is targeted at the
-   narrower case where a UUID parser already exists in the consuming
-   system and adding a referent URL is the only thing missing.
+   *  Resolution of RUUIDs runs over the existing RIR / LIR / ISP
+      allocation chain and the DNS reverse-zone delegation chain, with
+      no dedicated registry or central resolver.  The accountability
+      gradient is the one that already governs IP address space.
 
 1.2.  Applicability
 
@@ -202,6 +215,16 @@ Internet-Draft                    RUUID                         May 2026
    Workflows requiring coordination-free generation of structured
    (sortable, time-ordered) identifiers SHOULD prefer UUID version 7
    ([RFC9562]); see Section 7.4.
+
+
+
+
+
+
+Mottershead             Expires 29 November 2026                [Page 4]
+
+Internet-Draft                    RUUID                         May 2026
+
 
 2.  Conventions and Terminology
 
@@ -218,13 +241,6 @@ Internet-Draft                    RUUID                         May 2026
    Network prefix  The 64-bit field of an RUUID that carries an IPv6 /64
       network prefix.  An IPv4 /32 is encoded as the corresponding 6to4
       prefix ([RFC3056]); see Section 3.2.
-
-
-
-Mottershead             Expires 28 November 2026                [Page 4]
-
-Internet-Draft                    RUUID                         May 2026
-
 
    Identifier  The 48-bit field of the RUUID that names the referent
       within the network prefix.  See Section 3.
@@ -261,23 +277,7 @@ Internet-Draft                    RUUID                         May 2026
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-Mottershead             Expires 28 November 2026                [Page 5]
+Mottershead             Expires 29 November 2026                [Page 5]
 
 Internet-Draft                    RUUID                         May 2026
 
@@ -333,7 +333,7 @@ Internet-Draft                    RUUID                         May 2026
 
 
 
-Mottershead             Expires 28 November 2026                [Page 6]
+Mottershead             Expires 29 November 2026                [Page 6]
 
 Internet-Draft                    RUUID                         May 2026
 
@@ -362,26 +362,26 @@ Internet-Draft                    RUUID                         May 2026
 
    A resolver executes:
 
-   A. *(Phase 1)*
+   A. *Phase 1*
 
    1.  Determine address family.  If the top 16 bits of the network
        field equal 0x2002, the next 32 bits are the IPv4 /32 (reverse
        zone in-addr.arpa); otherwise the full 64 bits are an IPv6 /64
        network prefix (reverse zone ip6.arpa).
 
-   2.  *(Phase 1)* Consult a _registry endpoint_ (Section 4.2) for the
-       domain and UUID-document URI associated with the network prefix.
-       This is the only step that MUST succeed; later steps have
-       documented defaults.
+   2.  Consult a _registry endpoint_ (Section 4.2) for the domain and
+       UUID-document URI associated with the network prefix.  This is
+       the only step that MUST succeed; later steps have documented
+       defaults.
 
-   3.  *(Phase 1)* Fetch the UUID document (Section 6).  On fetch
-       failure or non-JSON body, proceed with no document.
+   3.  Fetch the UUID document (Section 6).  On fetch failure or non-
+       JSON body, proceed with no document.
 
-   B. *(Phase 2)*
+   B. *Phase 2*
 
    1.  Construct the referent URI: pick the service entry from the UUID
        Document which corresponds to the RUUID's type (or fall back per
-       Section 4.6) and apply placeholder substitution.
+       Section 4.5) and apply placeholder substitution.
 
    Per-identifier metadata lives in the UUID document, not the registry,
    so registry state per domain is constant regardless of how many
@@ -389,7 +389,7 @@ Internet-Draft                    RUUID                         May 2026
 
 
 
-Mottershead             Expires 28 November 2026                [Page 7]
+Mottershead             Expires 29 November 2026                [Page 7]
 
 Internet-Draft                    RUUID                         May 2026
 
@@ -397,36 +397,24 @@ Internet-Draft                    RUUID                         May 2026
 4.2.  Registry endpoints
 
    A registry endpoint returns the domain and UUID-document URI for a
-   given network prefix.  Two endpoint types are defined:
+   given network prefix, reached over DNS.  The resolver does a PTR
+   query against the reverse-DNS name (Section 4.3) for the domain, then
+   a URI query at _uuid.<domain> (falling back to TXT; Section 4.4) for
+   the document URI.  The system DNS resolver is the default; any DNS-
+   protocol-speaking service with these semantics is conformant.  The
+   DNS resolver may be either traditional DNS over UDP/TCP port 53 or a
+   DNS-over-HTTPS (DoH) service ([RFC8484]).
 
-   *DNS-protocol endpoint.* The resolver does a PTR query against the
-   reverse-DNS name (Section 4.3) for the domain, then a URI query at
-   _uuid.<domain> (falling back to TXT; Section 4.4) for the document
-   URI.  The system DNS resolver is the default; any DNS-protocol-
-   speaking service with these semantics is conformant.  The DNS
-   resolver may be either the traditional UDP port 53 or a DNS over
-   HTTPS (DoH) service, as defined by [RFC8484].
-
-   *HTTP API endpoint* (Section 4.5).  Returns the (domain,
-   uuid_document_uri) pair as JSON in one round trip; deployable on a
-   static-file host.
-
-   The DNS-protocol endpoint is the universal default: every public IP
-   prefix has a reverse-DNS chain.  An HTTP API endpoint requires pre-
-   configuration; a resolver without out-of-band context MUST use the
-   DNS-protocol endpoint.  When a consumer consults both endpoints,
-   their responses for the same network prefix MUST agree; a
-   disagreement SHOULD be treated as compromise of one or both.
+   Every public IP prefix has a reverse-DNS chain, so resolution needs
+   no dedicated registry or new infrastructure.
 
 4.2.1.  Endpoint configuration
 
-   A registry endpoint is configured by URL; the scheme determines the
-   type.  A DNS-protocol endpoint uses dns://<host>[:<port>] ([RFC4501];
-   port defaults to 53).  A DoH-reachable DNS-protocol endpoint uses an
-   https:// URL ([RFC8484]), distinguished from the HTTP API endpoint by
-   Accept (application/dns-message vs. application/json).  An HTTP API
-   endpoint uses https://<authority>[/<path>]; the resolver appends the
-   lookup key from Section 4.5.
+   A registry endpoint is configured by URL; the scheme determines how
+   it is reached.  A DNS-protocol endpoint uses dns://<host>[:<port>]
+   ([RFC4501]; port defaults to 53).  A DoH-reachable endpoint uses an
+   https:// URL ([RFC8484]), carrying wire-format DNS messages
+   (application/dns-message).
 
 4.3.  Reverse-DNS name construction
 
@@ -438,17 +426,6 @@ Internet-Draft                    RUUID                         May 2026
    For IPv6-encoded RUUIDs, the reverse-DNS name is the standard
    ip6.arpa name (Section 2.5 of [RFC1035]) truncated to the first 16
    nibbles (the /64 boundary).
-
-
-
-
-
-
-
-Mottershead             Expires 28 November 2026                [Page 8]
-
-Internet-Draft                    RUUID                         May 2026
-
 
 4.4.  UUID document resolution
 
@@ -462,77 +439,32 @@ Internet-Draft                    RUUID                         May 2026
    permits recursive resolvers to return minimal answers to ANY meta-
    queries, silently losing published records.
 
+
+
+
+
+
+
+Mottershead             Expires 29 November 2026                [Page 8]
+
+Internet-Draft                    RUUID                         May 2026
+
+
 4.4.1.  Default document URI
 
    If no usable record is present at _uuid.<domain>, the UUID-document
    URI defaults to https://<domain>/.well-known/uuid-document.json
    (well-known suffix per [RFC8615], registered in Section 8).  On a
    fetch failure of the default URI, the resolver applies the default
-   referent template (Section 4.6.2).  A UUID document hosted elsewhere
+   referent template (Section 4.5.2).  A UUID document hosted elsewhere
    is located by publishing a URI or TXT record at _uuid.<domain>.
 
-4.5.  Registry HTTP API endpoint
-
-   An HTTP API registry endpoint returns the domain and UUID-document
-   URI in one HTTPS round trip.  The endpoint MUST recognise both URL
-   forms:
-
-   GET <registry-url>/<reverse-dns-name>
-   GET <registry-url>/<address>.uuid
-
-   <reverse-dns-name> is the name the DNS-protocol endpoint uses
-   (Section 4.3, no trailing dot). <address> is dotted- quad IPv4 (for
-   6to4-encoded IPv4 /32s) or textual IPv6 (for IPv6 /64 network
-   prefixes); the .uuid suffix avoids collision with application paths
-   at the same host.  Both forms return byte-identical responses.
-
-   The 200 response MUST be application/json ([RFC8259]) with at least:
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-Mottershead             Expires 28 November 2026                [Page 9]
-
-Internet-Draft                    RUUID                         May 2026
-
-
-           +===================+========+======================+
-           | name              | type   | meaning              |
-           +===================+========+======================+
-           | reverse_dns_name  | string | the reverse-DNS name |
-           |                   |        | from the URL, echoed |
-           +-------------------+--------+----------------------+
-           | domain            | string | the domain           |
-           +-------------------+--------+----------------------+
-           | uuid_document_uri | string | the URI of the UUID  |
-           |                   |        | document             |
-           +-------------------+--------+----------------------+
-
-                                  Table 2
-
-   Resolvers MUST ignore unknown members.  A 404 means "no binding"
-   (treat like NXDOMAIN at the PTR step).  The mapping is long-lived per
-   network prefix; registries SHOULD set a generous Cache-Control: max-
-   age (standard HTTP caching, [RFC9111], applies).  The endpoint can be
-   served as static files.  The resolver MUST verify the endpoint's TLS
-   identity per [RFC9525].
-
-4.6.  Referent URI construction
+4.5.  Referent URI construction
 
    The referent URI is constructed by selecting a template and applying
    placeholder substitution.
 
-4.6.1.  Template selection
+4.5.1.  Template selection
 
    The resolver picks a template by checking, in order:
 
@@ -544,23 +476,11 @@ Internet-Draft                    RUUID                         May 2026
 
    3.  The spec-wide default template defined below.
 
-4.6.2.  Default template
+4.5.2.  Default template
 
    When no document template applies, the default is:
 
    https://<domain>/<type>/<identifier>
-
-
-
-
-
-
-
-
-Mottershead             Expires 28 November 2026               [Page 10]
-
-Internet-Draft                    RUUID                         May 2026
-
 
    The default applies when the service array is absent, has neither a
    #<type> nor #0 entry, or has only entries without serviceEndpoint; it
@@ -568,9 +488,23 @@ Internet-Draft                    RUUID                         May 2026
    DNS success alone always yields a resolvable URL).  When URLs already
    follow this convention, no UUID document need be published.
 
-4.6.3.  Placeholder substitution
+4.5.3.  Placeholder substitution
 
    The resolver replaces every occurrence of the following substrings:
+
+
+
+
+
+
+
+
+
+
+Mottershead             Expires 29 November 2026                [Page 9]
+
+Internet-Draft                    RUUID                         May 2026
+
 
      +==============+===============================================+
      | placeholder  | substituted with                              |
@@ -598,7 +532,7 @@ Internet-Draft                    RUUID                         May 2026
      | <domain>     | the domain returned by the PTR lookup         |
      +--------------+-----------------------------------------------+
 
-                                 Table 3
+                                 Table 2
 
    Substituted values are not URI-encoded; all are URL-safe by
    construction.
@@ -610,14 +544,6 @@ Internet-Draft                    RUUID                         May 2026
    for §7.3 (e.g., a date far in the future) is the publisher's
    misconfiguration, not the resolver's concern.
 
-
-
-
-Mottershead             Expires 28 November 2026               [Page 11]
-
-Internet-Draft                    RUUID                         May 2026
-
-
    The result MUST be a valid URI reference per Section 4 of [RFC3986].
    A relative reference is resolved against the UUID document's fetch
    URI per Section 5 of [RFC3986].  UUID documents SHOULD use *absolute-
@@ -625,6 +551,16 @@ Internet-Draft                    RUUID                         May 2026
    so the document can be moved between hosts without editing service
    entries: /-rooted references transplant the document's scheme and
    authority unchanged.
+
+
+
+
+
+
+Mottershead             Expires 29 November 2026               [Page 10]
+
+Internet-Draft                    RUUID                         May 2026
+
 
 5.  TXT Record Format
 
@@ -667,19 +603,20 @@ Internet-Draft                    RUUID                         May 2026
    the network prefix, covers every full RUUID under that network
    prefix.
 
-
-
-Mottershead             Expires 28 November 2026               [Page 12]
-
-Internet-Draft                    RUUID                         May 2026
-
-
    The UUID document's id is the URI used to dereference it (CID
    §canonical-URL): the URI published at _uuid.<domain>, or the default-
    document URI (Section 4.4.1) when no record is published.  The URI
    MAY use any URL-Standard scheme.
 
    The fields used by the resolution pipeline are:
+
+
+
+
+Mottershead             Expires 29 November 2026               [Page 11]
+
+Internet-Draft                    RUUID                         May 2026
+
 
    +===========+=======+===============+==============================+
    |field      |type   | required by   | meaning                      |
@@ -707,7 +644,7 @@ Internet-Draft                    RUUID                         May 2026
    |           |objects|               |                              |
    +-----------+-------+---------------+------------------------------+
 
-                                 Table 4
+                                 Table 3
 
    No top-level field is REQUIRED: the empty object {} is processable
    (it just makes no RUUIDs resolvable, other than those resolvable
@@ -715,20 +652,6 @@ Internet-Draft                    RUUID                         May 2026
    resolvers MUST ignore unknown fields.  A resolver that needs a field
    which is absent or unparseable MUST fail that operation rather than
    substitute defaults.
-
-
-
-
-
-
-
-
-
-
-Mottershead             Expires 28 November 2026               [Page 13]
-
-Internet-Draft                    RUUID                         May 2026
-
 
 6.3.  Verification fields
 
@@ -743,13 +666,21 @@ Internet-Draft                    RUUID                         May 2026
    infrastructure pointing at the wrong tenant, a prefix move without
    re-hosting the document).
 
+
+
+
+Mottershead             Expires 29 November 2026               [Page 12]
+
+Internet-Draft                    RUUID                         May 2026
+
+
 6.4.  Service entries (per-type referent templates)
 
    The document's service array carries one entry per RUUID type covered
    by the document.  Entries follow the CID service-entry schema with
    one convention: the entry's id is the fragment URI #<type> (the
    decimal type value, "0" through "1023"), and serviceEndpoint is the
-   referent-URI template the resolver substitutes (Section 4.6).
+   referent-URI template the resolver substitutes (Section 4.5).
 
    {
      "@context": "https://www.w3.org/ns/cid/v1",
@@ -770,77 +701,55 @@ Internet-Draft                    RUUID                         May 2026
    }
 
    The array is sparse; missing entries fall back to the default
-   template (Section 4.6.2).  Different types MAY use entirely different
+   template (Section 4.5.2).  Different types MAY use entirely different
    URI structures.
-
-
-
-
-
-
-
-
-
-Mottershead             Expires 28 November 2026               [Page 14]
-
-Internet-Draft                    RUUID                         May 2026
-
 
 6.4.1.  Type entry fields
 
-      +=================+==========================================+
-      | field           | meaning                                  |
-      +=================+==========================================+
-      | id              | the fragment URI #<type> (e.g. #1, #42); |
-      |                 | the type value is the substring after #  |
-      +-----------------+------------------------------------------+
-      | type            | human-readable label ("User", "CowTag"); |
-      |                 | CID requires this field but this spec    |
-      |                 | places no constraint on content          |
-      +-----------------+------------------------------------------+
-      | serviceEndpoint | URI template per Section 4.6; the        |
-      |                 | default template applies if absent       |
-      +-----------------+------------------------------------------+
+    +=================+==============================================+
+    | field           | meaning                                      |
+    +=================+==============================================+
+    | id              | the fragment URI #<type> (e.g. #1, #42); the |
+    |                 | type value is the numeric string after #     |
+    +-----------------+----------------------------------------------+
+    | type            | arbitrary string or set of strings.          |
+    +-----------------+----------------------------------------------+
+    | serviceEndpoint | URI template per Section 4.5; the default    |
+    |                 | template applies if absent                   |
+    +-----------------+----------------------------------------------+
 
-                                 Table 5
-
-   Type entries MAY additionally carry referent_kind (structured
-   metadata drawn from IANA registries, e.g. service from RFC 6335,
-   media_type from RFC 6838, urn_namespace from RFC 8141) and a free-
-   form description.  All other fields are OPTIONAL.  Consumers MUST
-   ignore unknown fields.  Service entries whose id does not match
-   #<type> are not type entries and are ignored by the resolution
-   pipeline.
-
-6.5.  The did:uuid DID method
-
-   An RUUID is also a stable identifier for a W3C Decentralized
-   Identifier (DID) document ([W3C-DID]).  The did:uuid method:
-
-   did:uuid:<canonical-RUUID>
-
-   A did:uuid resolver performs RUUID resolution per Section 4 to obtain
-   the Phase 2 referent URI, then synthesises a per-RUUID DID document
-   wrapping that URI as a service entry, with controller derived from
-   the RUUID's network prefix.  The synthesis transform sits _above_ the
-   RUUID resolution pipeline, not inside it: the RUUID spec's normative
-   output is a URI, and the DID document is a method-specific wrapper of
-   that URI.  The full method spec is published separately.
-
-7.  Generation Considerations
+                                 Table 4
 
 
 
 
 
 
-
-
-
-Mottershead             Expires 28 November 2026               [Page 15]
+Mottershead             Expires 29 November 2026               [Page 13]
 
 Internet-Draft                    RUUID                         May 2026
 
+
+   The id field is OPTIONAL in the Controlled Identifier specification,
+   and may be any valid URI that is unique within the list of services.
+   However, a RUUID resolver SHOULD ignore service entries with no id,
+   and service entries whose id does not have a numeric fragment between
+   #0 and #1023.
+
+   The Controlled Identifier specification requires the type field, but
+   the RUUID resolver makes no use of it.  A resolver MUST NOT treat a
+   missing type field as an error, even though a service entry lacking
+   type does not conform to the Controlled Identifier specification.  If
+   present, a resolver MAY return the type value as additional
+   information.
+
+   The serviceEndpoint field is REQUIRED in the Controlled Identifier
+   specification.  When the RUUID resolver selects a service entry
+   because its id fragment matches the RUUID's type value, the
+   serviceEndpoint is the template used to construct the URI of the
+   referent.
+
+7.  Generation Considerations
 
 7.1.  Network prefix semantics
 
@@ -857,19 +766,31 @@ Internet-Draft                    RUUID                         May 2026
 
    Identifiers MUST be unique within (network, type).  Global uniqueness
    of RUUIDs follows from this property and the global uniqueness of IP
-   allocations.  Once an identifier is assigned, the binding MAY be
-   retired but the identifier value MUST NOT be reused for a different
-   referent.
+   allocations, provided the generating entity has control of the
+   network prefix at generation-time and maintains that indefinitely.
+   Once an identifier is assigned, the binding MAY be retired but the
+   identifier value MUST NOT be reused for a different referent.
 
 7.3.  Identifier construction
 
    For an RUUID used only within the generator's local scope, the 48-bit
    identifier MAY be any value satisfying Section 7.2.
 
+
+
+
+
+
+Mottershead             Expires 29 November 2026               [Page 14]
+
+Internet-Draft                    RUUID                         May 2026
+
+
    For an RUUID used outside the generator's local scope, where
-   persistent universal uniqueness is required without ongoing
+   persistent universal uniqueness is required without ongoing tenancy
+   by the generator of the network prefix, and without ongoing
    coordination among independent generators, the identifier SHOULD be
-   constructed as:
+   constructed as follows:
 
    identifier = (day_count << 28) | sequence
 
@@ -879,9 +800,9 @@ Internet-Draft                    RUUID                         May 2026
       future day.  Any day satisfying these two conditions is valid;
       day_count need not be the day on which the RUUID is generated, and
       an implementation MAY reuse the same day_count for many RUUIDs
-      (e.g., the earliest day of its tenure, advancing only when the
-      2^28 sequence space is exhausted).  The count wraps after 2^20
-      days (approximately year 4896).
+      (e.g., the earliest day of its tenure of the network id, advancing
+      only when the 2^28 sequence space is exhausted).  The count wraps
+      after 2^20 days (approximately year 4896).
 
    *  sequence is a 28-bit value unique within (network, type,
       day_count).
@@ -891,16 +812,9 @@ Internet-Draft                    RUUID                         May 2026
    day_count values do not overlap, and identifiers from different
    controllers cannot collide even without coordination between them.
 
-
-
-Mottershead             Expires 28 November 2026               [Page 16]
-
-Internet-Draft                    RUUID                         May 2026
-
-
    This yields 2^28 = 268,435,456 RUUIDs per (network, type, day) and,
    across the 1024 type values, approximately 275 billion RUUIDs per
-   network prefix per day.
+   network prefix per day of tenancy.
 
    The sequence uniqueness requirement is scoped to a single day within
    a single (network, type); coordination across days, across types, and
@@ -910,13 +824,23 @@ Internet-Draft                    RUUID                         May 2026
    any other scheme.  Random selection from the 28-bit space achieves a
    2^-14 collision probability at approximately 16,000 RUUIDs per
    (network, type, day) and degrades sharply at higher volumes;
-   coordination of some form is required to approach the per-day
-   maximum.
+   coordination between multiple generator "workers" of some form is
+   required to approach the per-day maximum.
 
    Resolvers MUST NOT interpret this structure.  RUUIDs constructed this
    way are byte-indistinguishable from RUUIDs with opaque identifiers;
    the convention is a generator-side discipline that helps cooperating
    generators avoid collisions, not a resolution input.
+
+
+
+
+
+
+Mottershead             Expires 29 November 2026               [Page 15]
+
+Internet-Draft                    RUUID                         May 2026
+
 
 7.4.  Collisions
 
@@ -945,15 +869,6 @@ Internet-Draft                    RUUID                         May 2026
        under IETF Review [RFC8126], with the initial entry v=ruuid1
        referencing this document.
 
-
-
-
-
-Mottershead             Expires 28 November 2026               [Page 17]
-
-Internet-Draft                    RUUID                         May 2026
-
-
    3.  Registration of uuid-document.json in the "Well-Known URIs"
        registry per [RFC8615], referencing this document.  The well-
        known URI provides the default UUID-document location defined in
@@ -966,12 +881,22 @@ Internet-Draft                    RUUID                         May 2026
    RUUID resolution inherits its registry endpoint's trust substrate: a
    DNS-protocol endpoint inherits the DNS hierarchy (DNSSEC, where
    deployed, authenticates the _current_ operator rather than continuity
-   across transfers; see Section 9.2); an HTTP API endpoint inherits the
-   TLS connection to the configured URL ([RFC9525]) plus whatever
-   continuity guarantees the operator publishes out-of-band.
-   Strengthening trust beyond either substrate (signed records,
-   externally rooted continuity evidence, cross-checking) is out of
-   scope.
+   across transfers; see Section 9.2).  A DoH-reachable endpoint
+   additionally relies on the TLS connection to the configured URL
+   ([RFC9525]).  Strengthening trust beyond that substrate (signed
+   records, externally rooted continuity evidence) is out of scope.
+
+
+
+
+
+
+
+
+Mottershead             Expires 29 November 2026               [Page 16]
+
+Internet-Draft                    RUUID                         May 2026
+
 
 9.2.  Prefix transfer and long-term durability
 
@@ -1002,27 +927,10 @@ Internet-Draft                    RUUID                         May 2026
    Network prefixes used in RUUIDs SHOULD be ones expected to be held
    for the identifiers' operational lifetime; native IPv6 from a durably
    held PA/PI allocation is the strongest choice.  The 6to4-encoded IPv4
-
-
-
-Mottershead             Expires 28 November 2026               [Page 18]
-
-Internet-Draft                    RUUID                         May 2026
-
-
    form inherits IPv4-transfer risk.  Consumers SHOULD record the PTR
    target at first resolution and compare on later resolutions; this is
    trust-on-first-use, with the usual caveat that it offers nothing to a
    consumer whose first encounter is after the change.
-
-   An HTTP API endpoint's Phase 1 trust model is the registry
-   operator's, not IP-prefix-transfer.  The endpoint URL is a security-
-   relevant configuration item; continuity across a change of registry
-   operator is whatever the registry operator publishes out-of-band.  It
-   does not address first contact, for which an unconfigured consumer
-   must use the DNS-protocol endpoint.  Consumers consulting both
-   endpoints get redundant coverage; disagreement SHOULD be treated as
-   compromise of one or both.
 
    Phase 2 is plain URI resolution.  This spec places no constraint on
    the URI scheme; RUUID inherits whatever durability properties the
@@ -1031,6 +939,20 @@ Internet-Draft                    RUUID                         May 2026
 
    Even when resolution rots or is commandeered, the RUUID remains a
    valid identifier for its referent in the consumer's own records.
+
+
+
+
+
+
+
+
+
+
+Mottershead             Expires 29 November 2026               [Page 17]
+
+Internet-Draft                    RUUID                         May 2026
+
 
 9.3.  Privacy
 
@@ -1053,18 +975,6 @@ Internet-Draft                    RUUID                         May 2026
    counter-style identifiers are vulnerable to identifier guessing; when
    this is a concern, use random identifiers filling the available
    width.
-
-
-
-
-
-
-
-
-Mottershead             Expires 28 November 2026               [Page 19]
-
-Internet-Draft                    RUUID                         May 2026
-
 
 9.5.  DoS surface
 
@@ -1091,6 +1001,15 @@ Internet-Draft                    RUUID                         May 2026
               DOI 10.17487/RFC7553, June 2015,
               <https://www.rfc-editor.org/info/rfc7553>.
 
+
+
+
+
+Mottershead             Expires 29 November 2026               [Page 18]
+
+Internet-Draft                    RUUID                         May 2026
+
+
    [RFC8259]  Bray, T., Ed., "The JavaScript Object Notation (JSON) Data
               Interchange Format", STD 90, RFC 8259,
               DOI 10.17487/RFC8259, December 2017,
@@ -1100,27 +1019,12 @@ Internet-Draft                    RUUID                         May 2026
               (URIs)", RFC 8615, DOI 10.17487/RFC8615, May 2019,
               <https://www.rfc-editor.org/info/rfc8615>.
 
-   [RFC9111]  Fielding, R., Ed., Nottingham, M., Ed., and J. Reschke,
-              Ed., "HTTP Caching", STD 98, RFC 9111,
-              DOI 10.17487/RFC9111, June 2022,
-              <https://www.rfc-editor.org/info/rfc9111>.
-
    [RFC9525]  Saint-Andre, P. and R. Salz, "Service Identity in TLS",
               RFC 9525, DOI 10.17487/RFC9525, November 2023,
               <https://www.rfc-editor.org/info/rfc9525>.
 
    [W3C-CID]  "Controlled Identifiers v1.0", W3C Working Draft, n.d.,
               <https://www.w3.org/TR/cid-1.0/>.
-
-
-
-
-
-
-Mottershead             Expires 28 November 2026               [Page 20]
-
-Internet-Draft                    RUUID                         May 2026
-
 
    [RFC2119]  Bradner, S., "Key words for use in RFCs to Indicate
               Requirement Levels", BCP 14, RFC 2119,
@@ -1155,6 +1059,13 @@ Internet-Draft                    RUUID                         May 2026
               (DoH)", RFC 8484, DOI 10.17487/RFC8484, October 2018,
               <https://www.rfc-editor.org/info/rfc8484>.
 
+
+
+Mottershead             Expires 29 November 2026               [Page 19]
+
+Internet-Draft                    RUUID                         May 2026
+
+
    [RFC8482]  Abley, J., Gudmundsson, O., Majkowski, M., and E. Hunt,
               "Providing Minimal-Sized Responses to DNS Queries That
               Have QTYPE=ANY", RFC 8482, DOI 10.17487/RFC8482, January
@@ -1168,15 +1079,10 @@ Internet-Draft                    RUUID                         May 2026
               Overview", RFC 3650, DOI 10.17487/RFC3650, November 2003,
               <https://www.rfc-editor.org/info/rfc3650>.
 
-
-
-
-
-
-Mottershead             Expires 28 November 2026               [Page 21]
-
-Internet-Draft                    RUUID                         May 2026
-
+   [RFC4122]  Leach, P., Mealling, M., and R. Salz, "A Universally
+              Unique IDentifier (UUID) URN Namespace", RFC 4122,
+              DOI 10.17487/RFC4122, July 2005,
+              <https://www.rfc-editor.org/info/rfc4122>.
 
    [W3C-DID]  "Decentralized Identifiers (DIDs) v1.0 — Core
               architecture, data model, and representations",
@@ -1187,21 +1093,6 @@ Internet-Draft                    RUUID                         May 2026
               Writing an IANA Considerations Section in RFCs", BCP 26,
               RFC 8126, DOI 10.17487/RFC8126, June 2017,
               <https://www.rfc-editor.org/info/rfc8126>.
-
-Open issues
-
-   The following design questions remain open in this draft:
-
-   1.  *Version number.* Currently 8 (experimental); dedicated version
-       requested from IANA, provisionally 9.
-
-   2.  *referent_kind schema.* The type-entry referent_kind object
-       references IANA registries (RFC 6335 / 6838 / 8141) but does not
-       yet define a normative sub-field schema.
-
-   3.  *Verifiability extensions.* Signing keys published in the UUID
-       document, signed URI/TXT records, address binding, and external
-       trust roots are intentionally deferred to a follow-up document.
 
 Author's Address
 
@@ -1226,7 +1117,4 @@ Author's Address
 
 
 
-
-
-
-Mottershead             Expires 28 November 2026               [Page 22]
+Mottershead             Expires 29 November 2026               [Page 20]

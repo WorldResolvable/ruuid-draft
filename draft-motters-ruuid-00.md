@@ -25,7 +25,6 @@ normative:
   RFC7553:
   RFC8259:
   RFC8615:
-  RFC9111:
   RFC9525:
   W3C-CID:
     title: "Controlled Identifiers v1.0"
@@ -80,11 +79,8 @@ a "UUID document" resolves the domain and the fields of the UUID to a
 URI of its referent, allowing the UUID to be dereferenced.
 
 The bytes of an RUUID fully specify the algorithm a resolver MUST
-follow; there is no fallback or probing. The default resolution path
-uses only DNS, which may include DNS-over-HTTPS, but with no new
-infrastructure required. An HTTP API is also specified, which may be
-used ({{registry-http}}) for pre-coordinated deployments, instead of
-DNS.
+follow; there is no fallback or probing. Resolution uses only DNS,
+which may include DNS-over-HTTPS, with no new infrastructure required.
 
 An RUUID parses as a normal UUID with a well-defined version and the
 RFC 9562 variant; code that does not understand RUUIDs SHOULD treat
@@ -287,38 +283,24 @@ how many RUUIDs are generated under that domain.
 ## Registry endpoints {#registry-endpoints}
 
 A registry endpoint returns the domain and UUID-document URI for a
-given network prefix. Two endpoint types are defined:
+given network prefix, reached over DNS. The resolver does a `PTR`
+query against the reverse-DNS name ({{resolve-reverse-name}}) for the
+domain, then a `URI` query at `_uuid.<domain>` (falling back to `TXT`;
+{{doc-uri-resolution}}) for the document URI. The system DNS resolver
+is the default; any DNS-protocol-speaking service with these semantics
+is conformant. The DNS resolver may be either traditional DNS over
+UDP/TCP port 53 or a DNS-over-HTTPS (DoH) service ({{RFC8484}}).
 
-**DNS-protocol endpoint.** The resolver does a `PTR` query against
-the reverse-DNS name ({{resolve-reverse-name}}) for the domain, then
-a `URI` query at `_uuid.<domain>` (falling back to `TXT`;
-{{doc-uri-resolution}}) for the document URI. The system DNS
-resolver is the default; any DNS-protocol-speaking service with
-these semantics is conformant. The DNS resolver may be either the
-traditional UDP port 53 or a DNS over HTTPS (DoH) service, as defined
-by {{RFC8484}}.
-
-**HTTP API endpoint** ({{registry-http}}). Returns the
-`(domain, uuid_document_uri)` pair as JSON in one round trip;
-deployable on a static-file host.
-
-The DNS-protocol endpoint is the universal default: every public
-IP prefix has a reverse-DNS chain. An HTTP API endpoint requires
-pre-configuration; a resolver without out-of-band context MUST use
-the DNS-protocol endpoint. When a consumer consults both endpoints,
-their responses for the same network prefix MUST agree; a
-disagreement SHOULD be treated as compromise of one or both.
+Every public IP prefix has a reverse-DNS chain, so resolution needs no
+dedicated registry or new infrastructure.
 
 ### Endpoint configuration {#registry-endpoints-config}
 
-A registry endpoint is configured by URL; the scheme determines the
-type. A DNS-protocol endpoint uses `dns://<host>[:<port>]`
-({{RFC4501}}; port defaults to 53). A DoH-reachable DNS-protocol
-endpoint uses an `https://` URL ({{RFC8484}}), distinguished from the
-HTTP API endpoint by `Accept` (`application/dns-message`
-vs. `application/json`). An HTTP API endpoint uses
-`https://<authority>[/<path>]`; the resolver appends the lookup key
-from {{registry-http}}.
+A registry endpoint is configured by URL; the scheme determines how it
+is reached. A DNS-protocol endpoint uses `dns://<host>[:<port>]`
+({{RFC4501}}; port defaults to 53). A DoH-reachable endpoint uses an
+`https://` URL ({{RFC8484}}), carrying wire-format DNS messages
+(`application/dns-message`).
 
 ## Reverse-DNS name construction {#resolve-reverse-name}
 
@@ -352,40 +334,6 @@ suffix per {{RFC8615}}, registered in {{iana}}). On a fetch failure
 of the default URI, the resolver applies the default referent
 template ({{default-template}}). A UUID document hosted elsewhere is
 located by publishing a URI or TXT record at `_uuid.<domain>`.
-
-## Registry HTTP API endpoint {#registry-http}
-
-An HTTP API registry endpoint returns the domain and UUID-document
-URI in one HTTPS round trip. The endpoint MUST
-recognise both URL forms:
-
-~~~~
-GET <registry-url>/<reverse-dns-name>
-GET <registry-url>/<address>.uuid
-~~~~
-
-`<reverse-dns-name>` is the name the DNS-protocol endpoint uses
-({{resolve-reverse-name}}, no trailing dot). `<address>` is dotted-
-quad IPv4 (for 6to4-encoded IPv4 /32s) or textual IPv6 (for IPv6
-/64 network prefixes); the `.uuid` suffix avoids collision with
-application paths at the same host. Both forms return byte-identical
-responses.
-
-The 200 response MUST be `application/json` ({{RFC8259}}) with at
-least:
-
-| name                | type   | meaning                                       |
-|:--------------------|:-------|:----------------------------------------------|
-| `reverse_dns_name`  | string | the reverse-DNS name from the URL, echoed     |
-| `domain`            | string | the domain                                    |
-| `uuid_document_uri` | string | the URI of the UUID document                  |
-
-Resolvers MUST ignore unknown members. A 404 means "no binding"
-(treat like NXDOMAIN at the PTR step). The mapping is long-lived
-per network prefix; registries SHOULD set a generous
-`Cache-Control: max-age` (standard HTTP caching, {{RFC9111}},
-applies). The endpoint can be served as static files. The resolver
-MUST verify the endpoint's TLS identity per {{RFC9525}}.
 
 ## Referent URI construction {#template-substitution}
 
@@ -705,12 +653,10 @@ This document requests:
 RUUID resolution inherits its registry endpoint's trust substrate:
 a DNS-protocol endpoint inherits the DNS hierarchy (DNSSEC, where
 deployed, authenticates the *current* operator rather than
-continuity across transfers; see {{prefix-transfer}}); an HTTP API
-endpoint inherits the TLS connection to the configured URL
-({{RFC9525}}) plus whatever continuity guarantees the operator
-publishes out-of-band. Strengthening trust beyond either substrate
-(signed records, externally rooted continuity evidence, cross-checking)
-is out of scope.
+continuity across transfers; see {{prefix-transfer}}). A DoH-reachable
+endpoint additionally relies on the TLS connection to the configured
+URL ({{RFC9525}}). Strengthening trust beyond that substrate (signed
+records, externally rooted continuity evidence) is out of scope.
 
 ## Prefix transfer and long-term durability {#prefix-transfer}
 
@@ -745,16 +691,6 @@ inherits IPv4-transfer risk. Consumers SHOULD record the PTR target at
 first resolution and compare on later resolutions; this is
 trust-on-first-use, with the usual caveat that it offers nothing to a
 consumer whose first encounter is after the change.
-
-An HTTP API endpoint's Phase 1 trust model is the registry
-operator's, not IP-prefix-transfer. The endpoint URL is a
-security-relevant configuration item; continuity across a change of
-registry operator is whatever the registry operator publishes
-out-of-band. It does
-not address first contact, for which an unconfigured consumer must
-use the DNS-protocol endpoint. Consumers consulting both endpoints
-get redundant coverage; disagreement SHOULD be treated as
-compromise of one or both.
 
 Phase 2 is plain URI resolution. This spec places no constraint on
 the URI scheme; RUUID inherits whatever durability properties the
