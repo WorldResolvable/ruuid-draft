@@ -41,6 +41,7 @@ informative:
   RFC8482:
   RFC8141:
   RFC3650:
+  RFC4122:
   W3C-DID:
     title: "Decentralized Identifiers (DIDs) v1.0 — Core architecture, data model, and representations"
     target: https://www.w3.org/TR/did-core/
@@ -91,40 +92,57 @@ them as opaque.
 
 ## Relation to other identifier systems {#prior-art}
 
-Several existing schemes serve overlapping persistent-identifier
-roles. URNs ({{RFC8141}}) are URI-form identifiers
+RUUID builds on preexisting UUID versions and variants, and relates
+to several other identifier systems. The relevant prior art includes:
+
+- Preexisting UUID versions and variants ({{RFC9562}}), which provide
+coordination-free generation and enduring universal uniqueness, but
+whose identifiers are opaque: a UUID names a referent without
+indicating where to find it. An RUUID is itself a UUID (currently
+version 8 with variant 10) that adds resolvability to these
+properties, through a public and reproducible resolution method.
+
+- URNs ({{RFC8141}}) are URIs
 `urn:NID:NSS`, requiring an IANA-registered Namespace Identifier
 per namespace; resolution is not standardized at the URN layer
-and varies per namespace. W3C Decentralized Identifiers (DIDs,
+and varies per namespace.  {{RFC4122}} defined a URN namespace,
+`urn:uuid:`, for UUIDs.
+
+- W3C Decentralized Identifiers (DIDs,
 {{W3C-DID}}) are URIs `did:METHOD:ID` with per-method
 registration and per-method resolution rules; an RUUID can be
-expressed as a DID via the `did:uuid` method, specified
-separately and summarised in {{did-uuid}}. Archival Resource Keys
-(ARKs), Handle-based identifiers ({{RFC3650}}), and Digital
-Object Identifiers (DOIs, layered on the Handle System) all
-depend on registration with an assignment authority — an ARK
-Name Assigning Authority Number, a Handle Service Provider, a
-DOI Registration Agency — and on dedicated resolution
-infrastructure (the ARK N2T resolver, the Global Handle Registry,
-`doi.org`).
+expressed as a DID via the `did:uuid` method, which is
+specified separately.
 
-RUUIDs differ in two structural respects:
+- Numerous numbering schemes, such as IEEE Extended Unique Identifiers
+(EUI), Universal Product Codes (UPC), International Article Numbers
+(EAN), International Standard Book Numbers (ISBNs), Vehicle
+Identification Numbers (VINs), Object Identifiers (OIDs), Archival
+Resource Keys (ARKs), Handle-based identifiers ({{RFC3650}}), and
+Digital Object Identifiers (DOIs) depend on registration with an
+assignment authority. Many of these are resolvable but depend on
+dedicated resolution infrastructure.
+
+RUUIDs differ from the prior art in the following ways.
+
+- Unlike many of the existing numbering schemes, assignment of UUIDs
+  in general, and RUUIDs in particular, does not depend on a central
+  registration authority.  By following the specification, anybody may
+  generate a UUID and assign it to a referent with high confidence of
+  enduring universal uniqueness, without dependence on authority or
+  coordination with other parties generating UUIDs.  Accordingly, UUIDs
+  from independent sources may be pooled in databases and datastreams,
+  without coordination.
 
 - They are 128-bit UUIDs in the conventional textual form
   ({{Section 4 of RFC9562}}), not URIs. Code that does not know
   this specification can still parse, store, and compare them as
   UUIDs.
-- Resolution runs over the existing RIR / LIR / ISP allocation
-  chain and the DNS reverse-zone delegation chain, with no
-  dedicated registry or central resolver. The accountability
-  gradient is the one that already governs IP address space.
 
-The other schemes carry features RUUIDs do not — URN namespace-
-level abstraction, DID Document semantics, ARK qualifiers, Handle
-type-record system, DOI metadata services. RUUID is targeted at
-the narrower case where a UUID parser already exists in the
-consuming system and adding a referent URL is the only thing
-missing.
+- Resolution of RUUIDs runs over the existing RIR / LIR / ISP
+  allocation chain and the DNS reverse-zone delegation chain, with no
+  dedicated registry or central resolver. The accountability gradient
+  is the one that already governs IP address space.
 
 ## Applicability
 
@@ -241,21 +259,21 @@ referent URI.
 
 A resolver executes:
 
-A. **(Phase 1)**
+A. **Phase 1**
 
 1. Determine address family. If the top 16 bits of the
    network field equal `0x2002`, the next 32 bits are the IPv4 /32
    (reverse zone `in-addr.arpa`); otherwise the full 64 bits are an
    IPv6 /64 network prefix (reverse zone `ip6.arpa`).
-2. **(Phase 1)** Consult a *registry endpoint* ({{registry-endpoints}})
+2. Consult a *registry endpoint* ({{registry-endpoints}})
    for the domain and UUID-document URI associated with the network
    prefix. This is the only step that MUST succeed; later steps have
    documented defaults.
-3. **(Phase 1)** Fetch the UUID document ({{uuid-document}}). On
+3. Fetch the UUID document ({{uuid-document}}). On
    fetch failure or non-JSON body, proceed with no document.
 
 
-B. **(Phase 2)**
+B. **Phase 2**
 
 1. Construct the referent URI: pick the service entry
    from the UUID Document which corresponds to the
@@ -545,37 +563,30 @@ different URI structures.
 
 ### Type entry fields
 
-| field             | meaning                                                                                                          |
-|:------------------|:-----------------------------------------------------------------------------------------------------------------|
-| `id`              | the fragment URI `#<type>` (e.g. `#1`, `#42`); the type value is the substring after `#`                         |
-| `type`            | human-readable label (`"User"`, `"CowTag"`); CID requires this field but this spec places no constraint on content |
-| `serviceEndpoint` | URI template per {{template-substitution}}; the default template applies if absent                               |
+| field             | meaning                                                                                                            |
+|:------------------|:-------------------------------------------------------------------------------------------------------------------|
+| `id`              | the fragment URI `#<type>` (e.g. `#1`, `#42`); the type value is the numeric string after `#`                      |
+| `type`            | arbitrary string or set of strings.                                                                                |
+| `serviceEndpoint` | URI template per {{template-substitution}}; the default template applies if absent                                 |
 
-Type entries MAY additionally carry `referent_kind` (structured
-metadata drawn from IANA registries, e.g. `service` from RFC 6335,
-`media_type` from RFC 6838, `urn_namespace` from RFC 8141) and a
-free-form `description`. All other fields are OPTIONAL. Consumers
-MUST ignore unknown fields. Service entries whose `id` does not
-match `#<type>` are not type entries and are ignored by the
-resolution pipeline.
+The `id` field is OPTIONAL in the Controlled Identifier
+specification, and may be any valid URI that is unique within the
+list of services. However, a RUUID resolver SHOULD ignore service
+entries with no `id`, and service entries whose `id` does not have a
+numeric fragment between #0 and #1023.
 
-## The did:uuid DID method {#did-uuid}
+The Controlled Identifier specification requires the `type` field,
+but the RUUID resolver makes no use of it. A resolver MUST NOT treat
+a missing `type` field as an error, even though a service entry
+lacking `type` does not conform to the Controlled Identifier
+specification. If present, a resolver MAY return the `type` value as
+additional information.
 
-An RUUID is also a stable identifier for a W3C Decentralized
-Identifier (DID) document ({{W3C-DID}}). The `did:uuid` method:
-
-~~~~
-did:uuid:<canonical-RUUID>
-~~~~
-
-A `did:uuid` resolver performs RUUID resolution per {{resolution}}
-to obtain the Phase 2 referent URI, then synthesises a per-RUUID DID
-document wrapping that URI as a service entry, with `controller`
-derived from the RUUID's network prefix. The synthesis transform
-sits *above* the RUUID resolution pipeline, not inside it: the RUUID
-spec's normative output is a URI, and the DID document is a
-method-specific wrapper of that URI. The full method spec is
-published separately. 
+The `serviceEndpoint` field is REQUIRED in the Controlled Identifier
+specification. When the RUUID resolver selects a service entry
+because its `id` fragment matches the RUUID's type value, the
+`serviceEndpoint` is the template used to construct the URI of the
+referent.
 
 # Generation Considerations
 
@@ -594,7 +605,9 @@ on unrelated addresses, MAY share a single network prefix.
 
 Identifiers MUST be unique within `(network, type)`. Global
 uniqueness of RUUIDs follows from this property and the global
-uniqueness of IP allocations. Once an identifier is assigned, the
+uniqueness of IP allocations, provided the generating entity has
+control of the network prefix at generation-time and maintains
+that indefinitely.   Once an identifier is assigned, the
 binding MAY be retired but the identifier value MUST NOT be reused
 for a different referent.
 
@@ -604,26 +617,26 @@ For an RUUID used only within the generator's local scope, the
 48-bit identifier MAY be any value satisfying {{uniqueness}}.
 
 For an RUUID used outside the generator's local scope, where
-persistent universal uniqueness is required without ongoing
+persistent universal uniqueness is required without ongoing tenancy
+by the generator of the network prefix, and without ongoing
 coordination among independent generators, the identifier SHOULD
-be constructed as:
+be constructed as follows:
 
 ~~~~
 identifier = (day_count << 28) | sequence
 ~~~~
 
 - `day_count` is a 20-bit unsigned count of days since 2025-01-01
-  00:00:00 UTC. The value MUST be a day on which the generator
-  held reverse-DNS authority over the network prefix, and MUST
-  NOT be a future day. Any day satisfying these two conditions
-  is valid; `day_count` need not be the day on which the RUUID
-  is generated, and an implementation MAY reuse the same
-  `day_count` for many RUUIDs (e.g., the earliest day of its
-  tenure, advancing only when the 2^28 sequence space is
-  exhausted). The count wraps after 2^20 days (approximately
-  year 4896).
-- `sequence` is a 28-bit value unique within
-  `(network, type, day_count)`.
+  00:00:00 UTC. The value MUST be a day on which the generator held
+  reverse-DNS authority over the network prefix, and MUST NOT be a
+  future day. Any day satisfying these two conditions is valid;
+  `day_count` need not be the day on which the RUUID is generated, and
+  an implementation MAY reuse the same `day_count` for many RUUIDs
+  (e.g., the earliest day of its tenure of the network id, advancing
+  only when the 2^28 sequence space is exhausted). The count wraps
+  after 2^20 days (approximately year 4896).
+- `sequence` is a 28-bit value unique within `(network, type,
+  day_count)`.
 
 Successive controllers of a network prefix hold disjoint sets of
 tenure days, so the two MUST conditions above guarantee that
@@ -633,7 +646,7 @@ between them.
 
 This yields 2^28 = 268,435,456 RUUIDs per `(network, type, day)`
 and, across the 1024 type values, approximately 275 billion RUUIDs
-per network prefix per day.
+per network prefix per day of tenancy.
 
 The `sequence` uniqueness requirement is scoped to a single day
 within a single `(network, type)`; coordination across days,
@@ -643,8 +656,9 @@ component with within-period randomness, deliberate partitioning
 across cooperating generators, or any other scheme. Random
 selection from the 28-bit space achieves a 2^-14 collision
 probability at approximately 16,000 RUUIDs per `(network, type,
-day)` and degrades sharply at higher volumes; coordination of
-some form is required to approach the per-day maximum.
+day)` and degrades sharply at higher volumes; coordination between
+multiple generator "workers" of some form is required to approach
+the per-day maximum.
 
 Resolvers MUST NOT interpret this structure. RUUIDs constructed
 this way are byte-indistinguishable from RUUIDs with opaque
@@ -724,13 +738,13 @@ the genuine new failure mode RUUID introduces; mitigating it
 generally is an open problem for the IETF and address-registry
 community.
 
-Network prefixes used in RUUIDs SHOULD be ones expected to be held
-for the identifiers' operational lifetime; native IPv6 from a
-durably held PA/PI allocation is the strongest choice. The 6to4-encoded IPv4
-form inherits IPv4-transfer risk. Consumers SHOULD record the PTR
-target at first resolution and compare on later resolutions; this
-is trust-on-first-use, with the usual caveat that it offers nothing
-to a consumer whose first encounter is after the change.
+Network prefixes used in RUUIDs SHOULD be ones expected to be held for
+the identifiers' operational lifetime; native IPv6 from a durably held
+PA/PI allocation is the strongest choice. The 6to4-encoded IPv4 form
+inherits IPv4-transfer risk. Consumers SHOULD record the PTR target at
+first resolution and compare on later resolutions; this is
+trust-on-first-use, with the usual caveat that it offers nothing to a
+consumer whose first encounter is after the change.
 
 An HTTP API endpoint's Phase 1 trust model is the registry
 operator's, not IP-prefix-transfer. The endpoint URL is a
@@ -782,17 +796,3 @@ SHOULD cache UUID documents per domain so mass ingestion from one
 domain does not multiply fetches.
 
 --- back
-
-# Open issues
-{:numbered="false"}
-
-The following design questions remain open in this draft:
-
-1. **Version number.** Currently 8 (experimental); dedicated version
-   requested from IANA, provisionally 9.
-2. **`referent_kind` schema.** The type-entry `referent_kind`
-   object references IANA registries (RFC 6335 / 6838 / 8141) but
-   does not yet define a normative sub-field schema.
-3. **Verifiability extensions.** Signing keys published in the UUID
-   document, signed URI/TXT records, address binding, and external
-   trust roots are intentionally deferred to a follow-up document.
