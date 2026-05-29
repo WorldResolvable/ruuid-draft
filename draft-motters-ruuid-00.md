@@ -42,7 +42,7 @@ informative:
   RFC3650:
   RFC4122:
   W3C-DID:
-    title: "Decentralized Identifiers (DIDs) v1.0 — Core architecture, data model, and representations"
+    title: "Decentralized Identifiers (DIDs) v1.0 -- Core architecture, data model, and representations"
     target: https://www.w3.org/TR/did-core/
     date: 2022
     seriesinfo:
@@ -385,7 +385,7 @@ A template containing `<day>` is an assertion by the document
 publisher that identifiers under this entry are constructed per
 {{identifier-construction}}. The resolver does not check this and
 performs the substitution as defined regardless of the underlying
-bits; a `<day>` value implausible for §7.3 (e.g., a date far in
+bits; a `<day>` value implausible for Section 7.3 (e.g., a date far in
 the future) is the publisher's misconfiguration, not the
 resolver's concern.
 
@@ -421,7 +421,7 @@ whose DNS pointed them at it.
 ## Document fetch {#document-fetch}
 
 The UUID document is identified by the URI established at step 3 of
-{{resolution}} — either an explicitly-published URI from
+{{resolution}}: either an explicitly-published URI from
 `_uuid.<domain>` or the default ({{default-doc-uri}}). The URI MAY
 use any scheme the resolver can dereference to a fetchable JSON
 document: `https:` (the expected baseline), `http:`, `data:` (inline
@@ -442,7 +442,7 @@ by the network prefix, covers every full RUUID under that network
 prefix.
 
 The UUID document's `id` is the URI used to dereference it (CID
-§canonical-URL): the URI published at `_uuid.<domain>`, or the
+`canonical-URL`): the URI published at `_uuid.<domain>`, or the
 default-document URI ({{default-doc-uri}}) when no record is
 published. The URI MAY use any URL-Standard scheme.
 
@@ -674,7 +674,7 @@ intact.
 
 *Detectably rotted.* The prefix is no longer maintained for RUUID
 purposes (NXDOMAIN, or a PTR to a domain serving no UUID document).
-The resolver gets a clear failure signal — better than plain UUIDs
+The resolver gets a clear failure signal, better than plain UUIDs
 (no resolution at all) or a lapsed HTTPS URL (indistinguishable 404).
 
 *Commandeered.* The prefix has been reassigned and the new operator
@@ -710,7 +710,7 @@ network prefix for an RUUID.
 
 When the recommended construction ({{identifier-construction}}) is
 used, the RUUID's `day_count` discloses a day on which the
-generator held the network prefix — information of similar
+generator held the network prefix, information of similar
 character to public WHOIS and reverse-DNS delegation records. To
 suppress even this signal, use an opaque 48-bit identifier
 instead, subject to {{collision-tradeoffs}}.

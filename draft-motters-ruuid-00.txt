@@ -3,9 +3,9 @@
 
 
 Network Working Group                                     B. Mottershead
-Internet-Draft                                               28 May 2026
+Internet-Draft                                               29 May 2026
 Intended status: Standards Track                                        
-Expires: 29 November 2026
+Expires: 30 November 2026
 
 
            Resolvable Universally Unique Identifiers (RUUID)
@@ -45,7 +45,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 29 November 2026.
+   This Internet-Draft will expire on 30 November 2026.
 
 
 
@@ -53,7 +53,7 @@ Status of This Memo
 
 
 
-Mottershead             Expires 29 November 2026                [Page 1]
+Mottershead             Expires 30 November 2026                [Page 1]
 
 Internet-Draft                    RUUID                         May 2026
 
@@ -109,7 +109,7 @@ Table of Contents
 
 
 
-Mottershead             Expires 29 November 2026                [Page 2]
+Mottershead             Expires 30 November 2026                [Page 2]
 
 Internet-Draft                    RUUID                         May 2026
 
@@ -165,7 +165,7 @@ Internet-Draft                    RUUID                         May 2026
 
 
 
-Mottershead             Expires 29 November 2026                [Page 3]
+Mottershead             Expires 30 November 2026                [Page 3]
 
 Internet-Draft                    RUUID                         May 2026
 
@@ -221,7 +221,7 @@ Internet-Draft                    RUUID                         May 2026
 
 
 
-Mottershead             Expires 29 November 2026                [Page 4]
+Mottershead             Expires 30 November 2026                [Page 4]
 
 Internet-Draft                    RUUID                         May 2026
 
@@ -277,7 +277,7 @@ Internet-Draft                    RUUID                         May 2026
 
 
 
-Mottershead             Expires 29 November 2026                [Page 5]
+Mottershead             Expires 30 November 2026                [Page 5]
 
 Internet-Draft                    RUUID                         May 2026
 
@@ -333,7 +333,7 @@ Internet-Draft                    RUUID                         May 2026
 
 
 
-Mottershead             Expires 29 November 2026                [Page 6]
+Mottershead             Expires 30 November 2026                [Page 6]
 
 Internet-Draft                    RUUID                         May 2026
 
@@ -389,7 +389,7 @@ Internet-Draft                    RUUID                         May 2026
 
 
 
-Mottershead             Expires 29 November 2026                [Page 7]
+Mottershead             Expires 30 November 2026                [Page 7]
 
 Internet-Draft                    RUUID                         May 2026
 
@@ -445,7 +445,7 @@ Internet-Draft                    RUUID                         May 2026
 
 
 
-Mottershead             Expires 29 November 2026                [Page 8]
+Mottershead             Expires 30 November 2026                [Page 8]
 
 Internet-Draft                    RUUID                         May 2026
 
@@ -501,7 +501,7 @@ Internet-Draft                    RUUID                         May 2026
 
 
 
-Mottershead             Expires 29 November 2026                [Page 9]
+Mottershead             Expires 30 November 2026                [Page 9]
 
 Internet-Draft                    RUUID                         May 2026
 
@@ -541,7 +541,7 @@ Internet-Draft                    RUUID                         May 2026
    that identifiers under this entry are constructed per Section 7.3.
    The resolver does not check this and performs the substitution as
    defined regardless of the underlying bits; a <day> value implausible
-   for §7.3 (e.g., a date far in the future) is the publisher's
+   for Section 7.3 (e.g., a date far in the future) is the publisher's
    misconfiguration, not the resolver's concern.
 
    The result MUST be a valid URI reference per Section 4 of [RFC3986].
@@ -557,7 +557,7 @@ Internet-Draft                    RUUID                         May 2026
 
 
 
-Mottershead             Expires 29 November 2026               [Page 10]
+Mottershead             Expires 30 November 2026               [Page 10]
 
 Internet-Draft                    RUUID                         May 2026
 
@@ -584,7 +584,7 @@ Internet-Draft                    RUUID                         May 2026
 6.1.  Document fetch
 
    The UUID document is identified by the URI established at step 3 of
-   Section 4 — either an explicitly-published URI from _uuid.<domain> or
+   Section 4: either an explicitly-published URI from _uuid.<domain> or
    the default (Section 4.4.1).  The URI MAY use any scheme the resolver
    can dereference to a fetchable JSON document: https: (the expected
    baseline), http:, data: (inline JSON), file:, or did: (where the DID
@@ -604,7 +604,7 @@ Internet-Draft                    RUUID                         May 2026
    prefix.
 
    The UUID document's id is the URI used to dereference it (CID
-   §canonical-URL): the URI published at _uuid.<domain>, or the default-
+   canonical-URL): the URI published at _uuid.<domain>, or the default-
    document URI (Section 4.4.1) when no record is published.  The URI
    MAY use any URL-Standard scheme.
 
@@ -613,7 +613,7 @@ Internet-Draft                    RUUID                         May 2026
 
 
 
-Mottershead             Expires 29 November 2026               [Page 11]
+Mottershead             Expires 30 November 2026               [Page 11]
 
 Internet-Draft                    RUUID                         May 2026
 
@@ -669,7 +669,7 @@ Internet-Draft                    RUUID                         May 2026
 
 
 
-Mottershead             Expires 29 November 2026               [Page 12]
+Mottershead             Expires 30 November 2026               [Page 12]
 
 Internet-Draft                    RUUID                         May 2026
 
@@ -725,7 +725,7 @@ Internet-Draft                    RUUID                         May 2026
 
 
 
-Mottershead             Expires 29 November 2026               [Page 13]
+Mottershead             Expires 30 November 2026               [Page 13]
 
 Internet-Draft                    RUUID                         May 2026
 
@@ -781,7 +781,7 @@ Internet-Draft                    RUUID                         May 2026
 
 
 
-Mottershead             Expires 29 November 2026               [Page 14]
+Mottershead             Expires 30 November 2026               [Page 14]
 
 Internet-Draft                    RUUID                         May 2026
 
@@ -837,7 +837,7 @@ Internet-Draft                    RUUID                         May 2026
 
 
 
-Mottershead             Expires 29 November 2026               [Page 15]
+Mottershead             Expires 30 November 2026               [Page 15]
 
 Internet-Draft                    RUUID                         May 2026
 
@@ -893,7 +893,7 @@ Internet-Draft                    RUUID                         May 2026
 
 
 
-Mottershead             Expires 29 November 2026               [Page 16]
+Mottershead             Expires 30 November 2026               [Page 16]
 
 Internet-Draft                    RUUID                         May 2026
 
@@ -914,8 +914,8 @@ Internet-Draft                    RUUID                         May 2026
 
    _Detectably rotted._ The prefix is no longer maintained for RUUID
    purposes (NXDOMAIN, or a PTR to a domain serving no UUID document).
-   The resolver gets a clear failure signal — better than plain UUIDs
-   (no resolution at all) or a lapsed HTTPS URL (indistinguishable 404).
+   The resolver gets a clear failure signal, better than plain UUIDs (no
+   resolution at all) or a lapsed HTTPS URL (indistinguishable 404).
 
    _Commandeered._ The prefix has been reassigned and the new operator
    serves a PTR of their choosing.  The resolver sees an authentic
@@ -949,7 +949,7 @@ Internet-Draft                    RUUID                         May 2026
 
 
 
-Mottershead             Expires 29 November 2026               [Page 17]
+Mottershead             Expires 30 November 2026               [Page 17]
 
 Internet-Draft                    RUUID                         May 2026
 
@@ -964,9 +964,9 @@ Internet-Draft                    RUUID                         May 2026
 
    When the recommended construction (Section 7.3) is used, the RUUID's
    day_count discloses a day on which the generator held the network
-   prefix — information of similar character to public WHOIS and
-   reverse-DNS delegation records.  To suppress even this signal, use an
-   opaque 48-bit identifier instead, subject to Section 7.4.
+   prefix, information of similar character to public WHOIS and reverse-
+   DNS delegation records.  To suppress even this signal, use an opaque
+   48-bit identifier instead, subject to Section 7.4.
 
 9.4.  Identifier collision
 
@@ -1005,7 +1005,7 @@ Internet-Draft                    RUUID                         May 2026
 
 
 
-Mottershead             Expires 29 November 2026               [Page 18]
+Mottershead             Expires 30 November 2026               [Page 18]
 
 Internet-Draft                    RUUID                         May 2026
 
@@ -1061,7 +1061,7 @@ Internet-Draft                    RUUID                         May 2026
 
 
 
-Mottershead             Expires 29 November 2026               [Page 19]
+Mottershead             Expires 30 November 2026               [Page 19]
 
 Internet-Draft                    RUUID                         May 2026
 
@@ -1084,7 +1084,7 @@ Internet-Draft                    RUUID                         May 2026
               DOI 10.17487/RFC4122, July 2005,
               <https://www.rfc-editor.org/info/rfc4122>.
 
-   [W3C-DID]  "Decentralized Identifiers (DIDs) v1.0 — Core
+   [W3C-DID]  "Decentralized Identifiers (DIDs) v1.0 -- Core
               architecture, data model, and representations",
               W3C Recommendation REC-did-core-20220719, 2022,
               <https://www.w3.org/TR/did-core/>.
@@ -1117,4 +1117,4 @@ Author's Address
 
 
 
-Mottershead             Expires 29 November 2026               [Page 20]
+Mottershead             Expires 30 November 2026               [Page 20]
