@@ -17,7 +17,7 @@ template mean that when URLs follow the canonical convention,
 nothing beyond a reverse-DNS PTR record needs to be published;
 resolution degrades gracefully when configuration is missing. 
        The 64-bit network field carries an IPv6 /64 prefix directly. An IPv4
-/32 is encoded as the corresponding 6to4 prefix ( ).  RUUIDs
+/32 is encoded as the corresponding 6to4 prefix (RFC 3056).  RUUIDs
 are 128 bits in the standard UUID textual form. Pending a dedicated
 UUID version, they use the RFC 9562 experimental version 8 with
 variant 10, so existing UUID parsers recognise them as well-formed
@@ -1276,7 +1276,7 @@ template mean that when URLs follow the canonical convention,
 nothing beyond a reverse-DNS PTR record needs to be published;
 resolution degrades gracefully when configuration is missing.<a href="#section-abstract-1" class="pilcrow">¶</a></p>
 <p id="section-abstract-2">The 64-bit network field carries an IPv6 /64 prefix directly. An IPv4
-/32 is encoded as the corresponding 6to4 prefix (<span>[<a href="#RFC3056" class="cite xref">RFC3056</a>]</span>).  RUUIDs
+/32 is encoded as the corresponding 6to4 prefix (RFC 3056).  RUUIDs
 are 128 bits in the standard UUID textual form. Pending a dedicated
 UUID version, they use the RFC 9562 experimental version 8 with
 variant 10, so existing UUID parsers recognise them as well-formed

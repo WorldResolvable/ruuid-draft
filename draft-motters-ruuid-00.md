@@ -61,7 +61,7 @@ nothing beyond a reverse-DNS PTR record needs to be published;
 resolution degrades gracefully when configuration is missing.
 
 The 64-bit network field carries an IPv6 /64 prefix directly. An IPv4
-/32 is encoded as the corresponding 6to4 prefix ({{RFC3056}}).  RUUIDs
+/32 is encoded as the corresponding 6to4 prefix (RFC 3056).  RUUIDs
 are 128 bits in the standard UUID textual form. Pending a dedicated
 UUID version, they use the RFC 9562 experimental version 8 with
 variant 10, so existing UUID parsers recognise them as well-formed
